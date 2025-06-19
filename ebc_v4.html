@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="港電費計算器" />
+    <meta name="theme-color" content="#007AFF" />
+    <meta name="msapplication-TileColor" content="#007AFF" />
+    
+    <title>香港電費計算器 | Hong Kong Electricity Bill Calculator</title>
+    <meta name="description" content="香港電費計算器 - 計算您的年度電費成本，支持實時計算和港幣格式。Hong Kong Electricity Bill Calculator with real-time calculations and HKD formatting." />
+    <meta property="og:title" content="香港電費計算器 | Hong Kong Electricity Bill Calculator" />
+    <meta property="og:description" content="計算您的年度電費成本，支持實時計算和港幣格式。Calculate your annual electricity costs with real-time calculations." />
+    <meta property="og:type" content="website" />
+    
+    <!-- Embedded Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23007AFF'/%3E%3Cpath d='M50 25l12 25h-8v25l-16-25h8V25h4z' fill='white'/%3E%3Ccircle cx='50' cy='50' r='4' fill='%23FFD700'/%3E%3C/svg%3E" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23007AFF'/%3E%3Cpath d='M50 25l12 25h-8v25l-16-25h8V25h4z' fill='white'/%3E%3Ccircle cx='50' cy='50' r='4' fill='%23FFD700'/%3E%3C/svg%3E" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --ios-blue: hsl(207, 100%, 58%);
+            --ios-green: hsl(142, 71%, 45%);
+            --ios-red: hsl(4, 100%, 59%);
+            --ios-gray: hsl(240, 3%, 55%);
+            --ios-bg: hsl(240, 20%, 97%);
+            --radius: 0.75rem;
+            --touch-target: 44px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', sans-serif;
+            background-color: var(--ios-bg);
+            color: hsl(20, 14.3%, 4.1%);
+            line-height: 1.5;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header Styles */
+        .header {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid hsl(20, 5.9%, 90%);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 1rem;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--ios-blue);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .header-text h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: hsl(20, 14.3%, 4.1%);
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--ios-gray);
+        }
+
+        /* Main Content */
+        .main {
+            padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Horizontal Layout */
+        .horizontal-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            border: 1px solid hsl(20, 5.9%, 90%);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem;
+            border-bottom: 1px solid hsl(0, 0%, 90%);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.125rem;
+            font-weight: 600;
+            gap: 0.5rem;
+        }
+
+        .card-content {
+            padding: 1rem;
+        }
+
+        /* Input Styles */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: hsl(0, 0%, 30%);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input {
+            width: 100%;
+            padding: 1rem 0.75rem;
+            padding-right: 4rem;
+            font-size: 1.125rem;
+            border: 1px solid hsl(20, 5.9%, 90%);
+            border-radius: var(--radius);
+            background: white;
+            transition: all 0.2s;
+            min-height: var(--touch-target);
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--ios-blue);
+            box-shadow: 0 0 0 2px hsla(207, 100%, 58%, 0.2);
+        }
+
+        .input::-webkit-outer-spin-button,
+        .input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.875rem;
+            color: var(--ios-gray);
+            pointer-events: none;
+        }
+
+        .input-prefix {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.125rem;
+            color: var(--ios-gray);
+            pointer-events: none;
+        }
+
+        .input-with-prefix {
+            padding-left: 3rem;
+        }
+
+        /* Button Styles */
+        .button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--ios-blue);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: var(--touch-target);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .button:hover {
+            background: hsl(207, 100%, 50%);
+        }
+
+        .button:active {
+            transform: scale(0.95);
+            background: hsl(207, 100%, 45%);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Alert Styles */
+        .alert {
+            padding: 1rem;
+            border-radius: var(--radius);
+            border: 1px solid hsl(0, 84.2%, 80%);
+            background: hsl(0, 84.2%, 95%);
+            color: hsl(0, 84.2%, 20%);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-title {
+            font-weight: 600;
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: hsl(0, 0%, 96%);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            min-height: var(--touch-target);
+        }
+
+        .stat-card.blue {
+            background: hsl(207, 100%, 95%);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--ios-gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .stat-value.blue {
+            color: var(--ios-blue);
+        }
+
+        /* Cost Breakdown */
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid hsl(0, 0%, 90%);
+            min-height: var(--touch-target);
+        }
+
+        .cost-item:last-child {
+            border-bottom: none;
+        }
+
+        .cost-item.highlight {
+            background: hsl(142, 71%, 95%);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .cost-label {
+            font-weight: 500;
+        }
+
+        .cost-sublabel {
+            font-size: 0.875rem;
+            color: var(--ios-gray);
+        }
+
+        .cost-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .cost-value.highlight {
+            font-size: 1.25rem;
+            color: var(--ios-green);
+        }
+
+        /* Monthly Breakdown */
+        .monthly-breakdown {
+            background: hsl(0, 0%, 96%);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .breakdown-title {
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .breakdown-item {
+            color: var(--ios-gray);
+        }
+
+        .breakdown-value {
+            font-weight: 600;
+            color: hsl(20, 14.3%, 4.1%);
+            margin-top: 0.25rem;
+        }
+
+        /* Info Card */
+        .info-card {
+            background: hsl(207, 100%, 95%);
+            border: 1px solid hsl(207, 100%, 80%);
+        }
+
+        .info-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .info-icon {
+            color: var(--ios-blue);
+            margin-top: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        .info-title {
+            font-weight: 500;
+            color: hsl(207, 100%, 20%);
+            margin-bottom: 0.5rem;
+        }
+
+        .info-list {
+            list-style: none;
+            font-size: 0.875rem;
+            color: hsl(207, 100%, 25%);
+        }
+
+        .info-list li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Icons */
+        .icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: inline-block;
+        }
+
+        .icon-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none;
+        }
+
+        .text-blue {
+            color: var(--ios-blue);
+        }
+
+        .text-green {
+            color: var(--ios-green);
+        }
+
+        .text-red {
+            color: var(--ios-red);
+        }
+
+        /* Pull to Refresh Indicator */
+        .pull-refresh {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--ios-blue);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0 0 0.5rem 0.5rem;
+            font-size: 0.875rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .pull-refresh.visible {
+            opacity: 1;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 1024px) {
+            .horizontal-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.75rem;
+            }
+            
+            .header {
+                padding: 0.75rem;
+            }
+            
+            .header-text h1 {
+                font-size: 1.125rem;
+            }
+            
+            .card-content {
+                padding: 0.75rem;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .breakdown-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+            
+            .header {
+                padding: 0.5rem;
+            }
+            
+            .main {
+                padding: 1rem 0;
+            }
+            
+            .horizontal-container {
+                gap: 1rem;
+            }
+            
+            .card-header,
+            .card-content {
+                padding: 0.75rem;
+            }
+            
+            .input {
+                font-size: 1rem;
+            }
+            
+            .button {
+                font-size: 1rem;
+            }
+        }
+
+        /* Landscape Orientation */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .header {
+                padding: 0.5rem;
+            }
+            
+            .header-text h1 {
+                font-size: 1rem;
+            }
+            
+            .header-text p {
+                font-size: 0.75rem;
+            }
+            
+            .main {
+                padding: 0.75rem 0;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --ios-bg: hsl(240, 10%, 10%);
+            }
+            
+            body {
+                background-color: var(--ios-bg);
+                color: hsl(0, 0%, 90%);
+            }
+            
+            .card {
+                background: hsl(240, 10%, 15%);
+                border-color: hsl(240, 10%, 25%);
+            }
+            
+            .header {
+                background: hsl(240, 10%, 15%);
+                border-color: hsl(240, 10%, 25%);
+            }
+            
+            .input {
+                background: hsl(240, 10%, 20%);
+                border-color: hsl(240, 10%, 30%);
+                color: hsl(0, 0%, 90%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pull to Refresh Indicator -->
+    <div id="pullRefresh" class="pull-refresh">
+        <span>🔄 Pull to refresh</span>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-icon">⚡</div>
+                <div class="header-text">
+                    <h1>香港電費計算器</h1>
+                    <p>Hong Kong Electricity Calculator</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Error Message -->
+            <div id="errorAlert" class="alert hidden">
+                <span class="text-red">⚠️</span>
+                <div>
+                    <div class="alert-title">計算錯誤 Calculation Error</div>
+                    <p id="errorMessage"></p>
+                </div>
+            </div>
+
+            <!-- Horizontal Layout Container -->
+            <div class="horizontal-container">
+                <!-- Input Form (Left Side) -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon text-blue">🧮</span>
+                            計算參數 Calculation Parameters
+                        </div>
+                    </div>
+                    
+                    <div class="card-content">
+                        <!-- Usage Hours Input -->
+                        <div class="input-group">
+                            <label for="usageHours" class="label">
+                                年使用小時 Annual Usage Hours
+                            </label>
+                            <div class="input-wrapper">
+                                <input
+                                    id="usageHours"
+                                    type="number"
+                                    inputmode="numeric"
+                                    class="input"
+                                    placeholder="8760"
+                                    value="8760"
+                                    min="1"
+                                />
+                                <span class="input-unit">小時 hrs</span>
+                            </div>
+                        </div>
+
+                        <!-- Default Hours Input -->
+                        <div class="input-group">
+                            <label for="defaultHours" class="label">
+                                默認小時數 Default Hours
+                            </label>
+                            <div class="input-wrapper">
+                                <input
+                                    id="defaultHours"
+                                    type="number"
+                                    inputmode="numeric"
+                                    class="input"
+                                    placeholder="1200"
+                                    value="1200"
+                                    min="1"
+                                />
+                                <span class="input-unit">小時 hrs</span>
+                            </div>
+                        </div>
+
+                        <!-- kWh Consumption Input -->
+                        <div class="input-group">
+                            <label for="kWh" class="label">
+                                用電量 Power Consumption
+                            </label>
+                            <div class="input-wrapper">
+                                <input
+                                    id="kWh"
+                                    type="number"
+                                    inputmode="decimal"
+                                    class="input"
+                                    placeholder="265"
+                                    value="265"
+                                    min="0"
+                                    step="0.1"
+                                />
+                                <span class="input-unit">kWh</span>
+                            </div>
+                        </div>
+
+                        <!-- Cost per kWh Input -->
+                        <div class="input-group">
+                            <label for="costPerKWh" class="label">
+                                電價 Electricity Rate
+                            </label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">HK$</span>
+                                <input
+                                    id="costPerKWh"
+                                    type="number"
+                                    inputmode="decimal"
+                                    class="input input-with-prefix"
+                                    placeholder="1.445"
+                                    value="1.445"
+                                    min="0"
+                                    step="0.001"
+                                />
+                                <span class="input-unit">/kWh</span>
+                            </div>
+                        </div>
+
+                        <!-- Calculate Button -->
+                        <button id="calculateBtn" class="button">
+                            <span class="icon-sm">🧮</span>
+                            <span id="buttonText">計算電費 Calculate Bill</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Card (Right Side) -->
+                <div id="resultsCard" class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon text-green">📈</span>
+                            計算結果 Calculation Results
+                        </div>
+                    </div>
+                    
+                    <div class="card-content">
+                        <!-- Calculation Summary -->
+                        <div class="results-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">計算倍數 Multiplier</div>
+                                <div class="stat-value" id="multiplierValue">7.30</div>
+                            </div>
+                            <div class="stat-card blue">
+                                <div class="stat-label">年使用率 Annual Usage</div>
+                                <div class="stat-value blue" id="usagePercentValue">730%</div>
+                            </div>
+                        </div>
+
+                        <!-- Cost Breakdown -->
+                        <div class="cost-item">
+                            <div>
+                                <div class="cost-label">按默認小時計算年費用</div>
+                                <div class="cost-sublabel">Annual Cost by Default Hours</div>
+                            </div>
+                            <div class="cost-value" id="defaultCostValue">HK$ 382.93</div>
+                        </div>
+                        
+                        <div class="cost-item highlight">
+                            <div>
+                                <div class="cost-label">按實際使用計算年費用</div>
+                                <div class="cost-sublabel">Annual Cost by Actual Usage</div>
+                            </div>
+                            <div class="cost-value highlight" id="actualCostValue">HK$ 2,795.38</div>
+                        </div>
+
+                        <!-- Monthly Breakdown -->
+                        <div class="monthly-breakdown">
+                            <h3 class="breakdown-title">月度分析 Monthly Breakdown</h3>
+                            <div class="breakdown-grid">
+                                <div class="breakdown-item">
+                                    <div>月平均費用 Monthly Average</div>
+                                    <div class="breakdown-value" id="monthlyCostValue">HK$ 232.95</div>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div>每日費用 Daily Cost</div>
+                                    <div class="breakdown-value" id="dailyCostValue">HK$ 7.66</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card info-card">
+                <div class="card-content">
+                    <div class="info-content">
+                        <span class="info-icon">ℹ️</span>
+                        <div>
+                            <h3 class="info-title">使用說明 Usage Instructions</h3>
+                            <ul class="info-list">
+                                <li>• 輸入您的電器年使用小時數</li>
+                                <li>• 默認小時數為產品標準使用時間</li>
+                                <li>• 用電量和電價會自動計算總費用</li>
+                                <li>• 計算結果以港幣顯示</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'hk-electricity-calculator-v1';
+                    const urlsToCache = ['/'];
+
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then((cache) => cache.addAll(urlsToCache))
+                                .then(() => self.skipWaiting())
+                        );
+                    });
+
+                    self.addEventListener('activate', (event) => {
+                        event.waitUntil(
+                            caches.keys().then((cacheNames) => {
+                                return Promise.all(
+                                    cacheNames.map((cacheName) => {
+                                        if (cacheName !== CACHE_NAME) {
+                                            return caches.delete(cacheName);
+                                        }
+                                    })
+                                );
+                            }).then(() => self.clients.claim())
+                        );
+                    });
+
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then((response) => response || fetch(event.request))
+                                .catch(() => {
+                                    if (event.request.destination === 'document') {
+                                        return new Response('App is offline');
+                                    }
+                                })
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then(() => console.log('ServiceWorker registered'))
+                    .catch((err) => console.log('ServiceWorker registration failed: ', err));
+            });
+        }
+
+        // Web App Manifest Registration
+        const manifestData = {
+            "name": "香港電費計算器",
+            "short_name": "港電費計算器",
+            "description": "Hong Kong Electricity Bill Calculator with real-time calculations and HKD formatting",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#f8fafc",
+            "theme_color": "#007AFF",
+            "orientation": "portrait-primary",
+            "scope": "/",
+            "lang": "zh-HK",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23007AFF'/%3E%3Cpath d='M50 25l12 25h-8v25l-16-25h8V25h4z' fill='white'/%3E%3Ccircle cx='50' cy='50' r='4' fill='%23FFD700'/%3E%3C/svg%3E",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
+                },
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23007AFF'/%3E%3Cpath d='M50 25l12 25h-8v25l-16-25h8V25h4z' fill='white'/%3E%3Ccircle cx='50' cy='50' r='4' fill='%23FFD700'/%3E%3C/svg%3E",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
+                }
+            ],
+            "categories": ["utilities", "productivity", "finance"]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestUrl;
+        document.head.appendChild(manifestLink);
+
+        // Pull to Refresh functionality
+        let startY = 0;
+        let currentY = 0;
+        let isPulling = false;
+        const pullRefresh = document.getElementById('pullRefresh');
+
+        document.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0) {
+                startY = e.touches[0].clientY;
+                isPulling = true;
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isPulling) return;
+            
+            currentY = e.touches[0].clientY;
+            const pullDistance = currentY - startY;
+            
+            if (pullDistance > 50 && window.scrollY === 0) {
+                pullRefresh.classList.add('visible');
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            if (isPulling && pullRefresh.classList.contains('visible')) {
+                setTimeout(() => {
+                    pullRefresh.classList.remove('visible');
+                    window.location.reload();
+                }, 300);
+            }
+            isPulling = false;
+        });
+
+        // Main Calculator Class with Bug Fixes
+        class ElectricityCalculator {
+            constructor() {
+                this.inputs = {
+                    usageHours: 8760,
+                    defaultHours: 1200,
+                    kWh: 265,
+                    costPerKWh: 1.445
+                };
+                
+                this.initializeElements();
+                this.attachEventListeners();
+                this.calculate(); // Initial calculation
+            }
+
+            initializeElements() {
+                this.elements = {
+                    usageHours: document.getElementById('usageHours'),
+                    defaultHours: document.getElementById('defaultHours'),
+                    kWh: document.getElementById('kWh'),
+                    costPerKWh: document.getElementById('costPerKWh'),
+                    calculateBtn: document.getElementById('calculateBtn'),
+                    buttonText: document.getElementById('buttonText'),
+                    errorAlert: document.getElementById('errorAlert'),
+                    errorMessage: document.getElementById('errorMessage'),
+                    resultsCard: document.getElementById('resultsCard'),
+                    multiplierValue: document.getElementById('multiplierValue'),
+                    usagePercentValue: document.getElementById('usagePercentValue'),
+                    defaultCostValue: document.getElementById('defaultCostValue'),
+                    actualCostValue: document.getElementById('actualCostValue'),
+                    monthlyCostValue: document.getElementById('monthlyCostValue'),
+                    dailyCostValue: document.getElementById('dailyCostValue')
+                };
+            }
+
+            attachEventListeners() {
+                // Add input event listeners for real-time calculation
+                Object.keys(this.inputs).forEach(key => {
+                    if (this.elements[key]) {
+                        this.elements[key].addEventListener('input', (e) => {
+                            this.handleInputChange(key, e.target.value);
+                        });
+                    }
+                });
+
+                // Add click event listener for calculate button
+                if (this.elements.calculateBtn) {
+                    this.elements.calculateBtn.addEventListener('click', () => {
+                        this.calculate();
+                    });
+                }
+
+                // Handle mobile keyboard events
+                Object.keys(this.inputs).forEach(key => {
+                    if (this.elements[key]) {
+                        this.elements[key].addEventListener('focus', (e) => {
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        });
+                    }
+                });
+            }
+
+            handleInputChange(field, value) {
+                const numValue = parseFloat(value) || 0;
+                this.inputs[field] = numValue;
+                this.calculate();
+            }
+
+            formatHKD(amount) {
+                return `HK$ ${amount.toFixed(2)}`;
+            }
+
+            showError(message) {
+                if (this.elements.errorMessage && this.elements.errorAlert && this.elements.resultsCard) {
+                    this.elements.errorMessage.textContent = message;
+                    this.elements.errorAlert.classList.remove('hidden');
+                    this.elements.resultsCard.classList.add('hidden');
+                }
+            }
+
+            hideError() {
+                if (this.elements.errorAlert) {
+                    this.elements.errorAlert.classList.add('hidden');
+                }
+            }
+
+            showResults(results) {
+                this.hideError();
+                
+                // Show results card - Critical fix for calculation display bug
+                if (this.elements.resultsCard) {
+                    this.elements.resultsCard.classList.remove('hidden');
+                }
+                
+                // Update all result values with null checks
+                if (this.elements.multiplierValue) {
+                    this.elements.multiplierValue.textContent = results.multiplier.toFixed(2);
+                }
+                if (this.elements.usagePercentValue) {
+                    this.elements.usagePercentValue.textContent = `${results.usagePercentage.toFixed(0)}%`;
+                }
+                if (this.elements.defaultCostValue) {
+                    this.elements.defaultCostValue.textContent = this.formatHKD(results.annualCostByDefault);
+                }
+                if (this.elements.actualCostValue) {
+                    this.elements.actualCostValue.textContent = this.formatHKD(results.annualCostByUsage);
+                }
+                if (this.elements.monthlyCostValue) {
+                    this.elements.monthlyCostValue.textContent = this.formatHKD(results.monthlyCost);
+                }
+                if (this.elements.dailyCostValue) {
+                    this.elements.dailyCostValue.textContent = this.formatHKD(results.dailyCost);
+                }
+            }
+
+            calculate() {
+                try {
+                    // Show calculating state
+                    if (this.elements.buttonText) {
+                        this.elements.buttonText.textContent = '計算中...';
+                    }
+                    if (this.elements.calculateBtn) {
+                        this.elements.calculateBtn.disabled = true;
+                    }
+
+                    // Critical fix: Always read current values from input fields
+                    this.inputs.usageHours = parseFloat(this.elements.usageHours?.value) || 0;
+                    this.inputs.defaultHours = parseFloat(this.elements.defaultHours?.value) || 0;
+                    this.inputs.kWh = parseFloat(this.elements.kWh?.value) || 0;
+                    this.inputs.costPerKWh = parseFloat(this.elements.costPerKWh?.value) || 0;
+
+                    // Validation
+                    if (this.inputs.defaultHours === 0) {
+                        throw new Error('默認小時數不能為零 Default hours cannot be zero');
+                    }
+
+                    if (this.inputs.usageHours < 0 || this.inputs.kWh < 0 || this.inputs.costPerKWh < 0) {
+                        throw new Error('輸入值不能為負數 Input values cannot be negative');
+                    }
+
+                    if (this.inputs.usageHours === 0 || this.inputs.kWh === 0 || this.inputs.costPerKWh === 0) {
+                        throw new Error('請輸入有效的數值 Please enter valid values');
+                    }
+
+                    // Calculations matching the Swift code
+                    const multiplier = this.inputs.usageHours / this.inputs.defaultHours;
+                    const annualCostByDefault = this.inputs.kWh * this.inputs.costPerKWh;
+                    const annualCostByUsage = annualCostByDefault * multiplier;
+                    const monthlyCost = annualCostByUsage / 12;
+                    const dailyCost = annualCostByUsage / 365;
+
+                    const results = {
+                        multiplier,
+                        usagePercentage: multiplier * 100,
+                        annualCostByDefault,
+                        annualCostByUsage,
+                        monthlyCost,
+                        dailyCost
+                    };
+
+                    // Show results with a brief delay for better UX
+                    setTimeout(() => {
+                        this.showResults(results);
+                        if (this.elements.buttonText) {
+                            this.elements.buttonText.textContent = '計算電費 Calculate Bill';
+                        }
+                        if (this.elements.calculateBtn) {
+                            this.elements.calculateBtn.disabled = false;
+                        }
+                    }, 200);
+
+                } catch (err) {
+                    // Show error
+                    setTimeout(() => {
+                        this.showError(err.message);
+                        if (this.elements.buttonText) {
+                            this.elements.buttonText.textContent = '計算電費 Calculate Bill';
+                        }
+                        if (this.elements.calculateBtn) {
+                            this.elements.calculateBtn.disabled = false;
+                        }
+                    }, 200);
+                }
+            }
+        }
+
+        // Initialize calculator when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ElectricityCalculator();
+        });
+
+        // Add install prompt for PWA
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button
+            const installBtn = document.createElement('button');
+            installBtn.textContent = '安裝應用 Install App';
+            installBtn.className = 'button';
+            installBtn.style.position = 'fixed';
+            installBtn.style.bottom = '20px';
+            installBtn.style.right = '20px';
+            installBtn.style.width = 'auto';
+            installBtn.style.zIndex = '1000';
+            installBtn.style.fontSize = '0.875rem';
+            installBtn.style.padding = '0.5rem 1rem';
+            
+            installBtn.addEventListener('click', () => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                    installBtn.remove();
+                });
+            });
+            
+            document.body.appendChild(installBtn);
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (installBtn && installBtn.parentNode) {
+                    installBtn.remove();
+                }
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
