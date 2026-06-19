@@ -310,6 +310,31 @@
             opacity: 0.85;
         }
 
+        .household-tariff-row {
+            margin-bottom: 0.875rem;
+        }
+
+        .household-tariff-row .label {
+            margin-bottom: 0.5rem;
+        }
+
+        .household-tariff-note {
+            font-size: 0.75rem;
+            color: var(--ios-gray);
+            line-height: 1.45;
+            margin-bottom: 0.875rem;
+            padding: 0.625rem 0.75rem;
+            background: hsl(207, 100%, 97%);
+            border-radius: var(--radius);
+            border: 1px solid hsl(207, 100%, 90%);
+        }
+
+        .household-compare {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            margin-top: 0.375rem;
+        }
+
         .step-indicator {
             display: flex;
             align-items: center;
@@ -1388,6 +1413,12 @@
                 border-color: hsl(240, 10%, 28%);
             }
 
+            .household-tariff-note {
+                background: hsl(207, 40%, 16%);
+                border-color: hsl(207, 40%, 28%);
+                color: hsl(207, 60%, 80%);
+            }
+
             .saved-item-stat strong {
                 color: hsl(0, 0%, 90%);
             }
@@ -1805,10 +1836,21 @@
                         </div>
                     </div>
                     <div class="card-content">
+                        <div class="household-tariff-row">
+                            <div class="label">電力公司 · 累進制電價 Provider &amp; Block Tariff</div>
+                            <div class="rate-presets" role="group" aria-label="Household electricity provider">
+                                <button type="button" class="rate-chip active" data-household-provider="clp" id="householdClpChip">中電 CLP</button>
+                                <button type="button" class="rate-chip" data-household-provider="hke" id="householdHkeChip">港燈 HKE</button>
+                            </div>
+                        </div>
+                        <p id="householdTariffNote" class="household-tariff-note">
+                            按每月總用電量套用香港住宅累進電價（基本電費 + 燃料費），比逐件用平均電價相加更貼近實際帳單。
+                        </p>
                         <div class="household-hero">
-                            <div class="household-hero-label">全屋預計年電費 · Total Annual Bill</div>
+                            <div class="household-hero-label">全屋預計年電費（累進制）· Progressive Annual Bill</div>
                             <div class="household-hero-value" id="householdAnnualCost">HK$ 0.00</div>
                             <div class="household-hero-sub" id="householdSummary">0 件電器 · 0 kWh/年</div>
+                            <div class="household-compare" id="householdCompare"></div>
                         </div>
                         <div id="savedAppliancesList" class="saved-list"></div>
                         <div id="savedAppliancesEmpty" class="saved-empty hidden">
@@ -2344,6 +2386,84 @@
         ];
 
         const SAVED_APPLIANCES_KEY = 'hk_saved_appliances_v1';
+        const HOUSEHOLD_PROVIDER_KEY = 'hk_household_provider_v1';
+
+        const HK_PROGRESSIVE_TARIFFS = {
+            clp: {
+                id: 'clp',
+                label: '中電 CLP',
+                fuelCharge: 0.394,
+                averageNet: 1.406,
+                blocks: [
+                    { upTo: 400, basic: 0.91, label: '首 400 度' },
+                    { upTo: 800, basic: 1.114, label: '401–800 度' },
+                    { upTo: Infinity, basic: 1.308, label: '超過 800 度' }
+                ]
+            },
+            hke: {
+                id: 'hke',
+                label: '港燈 HKE',
+                fuelCharge: 0.354,
+                averageNet: 1.633,
+                blocks: [
+                    { upTo: 150, basic: 0.863, label: '首 150 度' },
+                    { upTo: 300, basic: 1.002, label: '151–300 度' },
+                    { upTo: 500, basic: 1.141, label: '301–500 度' },
+                    { upTo: 700, basic: 1.377, label: '501–700 度' },
+                    { upTo: 1000, basic: 1.516, label: '701–1,000 度' },
+                    { upTo: 1500, basic: 1.655, label: '1,001–1,500 度' },
+                    { upTo: Infinity, basic: 1.794, label: '超過 1,500 度' }
+                ]
+            }
+        };
+
+        class ProgressiveTariffCalculator {
+            static monthlyBill(kwh, tariff) {
+                if (!Number.isFinite(kwh) || kwh <= 0) return 0;
+                let remaining = kwh;
+                let cost = 0;
+                let prevCap = 0;
+
+                for (const block of tariff.blocks) {
+                    const cap = block.upTo === Infinity ? remaining : block.upTo;
+                    const blockSize = cap - prevCap;
+                    const inBlock = Math.min(remaining, blockSize);
+                    if (inBlock <= 0) break;
+                    cost += inBlock * (block.basic + tariff.fuelCharge);
+                    remaining -= inBlock;
+                    prevCap = cap;
+                    if (remaining <= 0) break;
+                }
+                return cost;
+            }
+
+            static annualBill(annualKwh, tariff) {
+                return this.monthlyBill(annualKwh / 12, tariff) * 12;
+            }
+
+            static effectiveRate(annualKwh, tariff) {
+                if (!annualKwh) return 0;
+                return this.annualBill(annualKwh, tariff) / annualKwh;
+            }
+
+            static getHouseholdTotals(items, providerId) {
+                const tariff = HK_PROGRESSIVE_TARIFFS[providerId] || HK_PROGRESSIVE_TARIFFS.clp;
+                const annualKwh = items.reduce((sum, item) => sum + (item.annualKwh || 0), 0);
+                const flatAnnualCost = items.reduce((sum, item) => sum + (item.annualCost || 0), 0);
+                const progressiveAnnualCost = this.annualBill(annualKwh, tariff);
+
+                return {
+                    count: items.length,
+                    annualKwh,
+                    monthlyKwh: annualKwh / 12,
+                    annualCost: progressiveAnnualCost,
+                    monthlyCost: progressiveAnnualCost / 12,
+                    flatAnnualCost,
+                    effectiveRate: this.effectiveRate(annualKwh, tariff),
+                    tariff
+                };
+            }
+        }
 
         class SavedApplianceStore {
             load() {
@@ -2748,6 +2868,7 @@
                 this.editingSavedId = null;
                 this.cameraPlugin = null;
                 this.liveClpRate = 1.406;
+                this.householdProvider = localStorage.getItem(HOUSEHOLD_PROVIDER_KEY) || 'clp';
                 this.currentStep = 1;
                 
                 this.initializeElements();
@@ -2785,8 +2906,12 @@
                     saveApplianceTitle: document.getElementById('saveApplianceTitle'),
                     savedAppliancesList: document.getElementById('savedAppliancesList'),
                     savedAppliancesEmpty: document.getElementById('savedAppliancesEmpty'),
+                    householdClpChip: document.getElementById('householdClpChip'),
+                    householdHkeChip: document.getElementById('householdHkeChip'),
+                    householdTariffNote: document.getElementById('householdTariffNote'),
                     householdAnnualCost: document.getElementById('householdAnnualCost'),
                     householdSummary: document.getElementById('householdSummary'),
+                    householdCompare: document.getElementById('householdCompare'),
                     addApplianceBtn: document.getElementById('addApplianceBtn'),
                     backFromAppliancesBtn: document.getElementById('backFromAppliancesBtn'),
                     headerSubtitle: document.getElementById('headerSubtitle'),
@@ -2909,6 +3034,10 @@
                     this.showStep(1);
                 });
                 this.elements.backFromAppliancesBtn?.addEventListener('click', () => this.showStep(1));
+                document.querySelectorAll('[data-household-provider]').forEach((chip) => {
+                    chip.addEventListener('click', () => this.setHouseholdProvider(chip.dataset.householdProvider));
+                });
+                this.updateHouseholdProviderChips();
                 this.elements.saveApplianceBtn?.addEventListener('click', () => this.saveCurrentAppliance());
                 this.elements.saveApplianceName?.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') this.saveCurrentAppliance();
@@ -3221,6 +3350,13 @@
                 }
 
                 this.liveClpRate = netRate;
+                const fuel = Number(residential.fuelCharge);
+                if (Number.isFinite(fuel) && fuel > 0) {
+                    HK_PROGRESSIVE_TARIFFS.clp.fuelCharge = fuel;
+                }
+                if (Number.isFinite(netRate) && netRate > 0) {
+                    HK_PROGRESSIVE_TARIFFS.clp.averageNet = netRate;
+                }
                 if (this.elements.clpRateChip) {
                     this.elements.clpRateChip.textContent = `中電 CLP $${netRate.toFixed(3)}`;
                     this.elements.clpRateChip.dataset.rate = netRate.toFixed(3);
@@ -3370,18 +3506,60 @@
                 }
             }
 
+            setHouseholdProvider(provider) {
+                if (!HK_PROGRESSIVE_TARIFFS[provider]) return;
+                this.householdProvider = provider;
+                localStorage.setItem(HOUSEHOLD_PROVIDER_KEY, provider);
+                this.updateHouseholdProviderChips();
+                this.renderSavedAppliances();
+            }
+
+            updateHouseholdProviderChips() {
+                document.querySelectorAll('[data-household-provider]').forEach((chip) => {
+                    chip.classList.toggle('active', chip.dataset.householdProvider === this.householdProvider);
+                });
+            }
+
+            formatHouseholdTariffNote(totals) {
+                const tariff = totals.tariff;
+                const tiers = tariff.blocks.map((block) => {
+                    const net = ((block.basic + tariff.fuelCharge) * 100).toFixed(1);
+                    return `${block.label} HK$${net}¢`;
+                }).join(' · ');
+                return `2026 ${tariff.label} 累進電價：${tiers}。假設全年每月平均用電 ${totals.monthlyKwh.toFixed(0)} 度，按各級累加計算。`;
+            }
+
+            formatHouseholdCompare(totals) {
+                if (!totals.count || totals.annualKwh <= 0) return '';
+                const diff = totals.flatAnnualCost - totals.annualCost;
+                const effective = `實效電價 Effective HK$${totals.effectiveRate.toFixed(3)}/kWh`;
+                if (Math.abs(diff) < 0.5) {
+                    return `${effective} · 與逐件平均電價相加相若`;
+                }
+                if (diff > 0) {
+                    return `${effective} · 較逐件平均電價估算慳 ${this.formatHKD(diff)}`;
+                }
+                return `${effective} · 較逐件平均電價估算多 ${this.formatHKD(Math.abs(diff))}`;
+            }
+
             renderSavedAppliances() {
                 const items = this.savedStore.load();
-                const totals = this.savedStore.getTotals(items);
+                const totals = ProgressiveTariffCalculator.getHouseholdTotals(items, this.householdProvider);
                 const listEl = this.elements.savedAppliancesList;
                 const emptyEl = this.elements.savedAppliancesEmpty;
 
+                if (this.elements.householdTariffNote) {
+                    this.elements.householdTariffNote.textContent = this.formatHouseholdTariffNote(totals);
+                }
                 if (this.elements.householdAnnualCost) {
                     this.elements.householdAnnualCost.textContent = this.formatHKD(totals.annualCost);
                 }
                 if (this.elements.householdSummary) {
                     this.elements.householdSummary.textContent =
-                        `${totals.count} 件電器 · ${totals.annualKwh.toFixed(0)} kWh/年 · 月均 ${this.formatHKD(totals.monthlyCost)}`;
+                        `${totals.count} 件電器 · ${totals.annualKwh.toFixed(0)} kWh/年 · 月均 ${totals.monthlyKwh.toFixed(0)} 度 · 月費 ${this.formatHKD(totals.monthlyCost)}`;
+                }
+                if (this.elements.householdCompare) {
+                    this.elements.householdCompare.textContent = this.formatHouseholdCompare(totals);
                 }
 
                 if (!listEl) return;

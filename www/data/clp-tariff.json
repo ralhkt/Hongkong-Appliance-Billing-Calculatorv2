@@ -12,7 +12,12 @@
     "basicTariffCents": 101.2,
     "fuelChargeCents": 39.4,
     "netTariffCents": 140.6,
-    "yearOnYearChangePercent": -2.6
+    "yearOnYearChangePercent": -2.6,
+    "progressiveBlocks": [
+      { "upTo": 400, "basic": 0.91, "label": "首 400 度" },
+      { "upTo": 800, "basic": 1.114, "label": "401–800 度" },
+      { "upTo": null, "basic": 1.308, "label": "超過 800 度" }
+    ]
   },
   "lastUpdated": "2026-06-19T00:00:00+08:00"
 }

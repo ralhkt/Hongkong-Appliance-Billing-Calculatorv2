@@ -1,0 +1,27 @@
+{
+  "provider": "Hongkong Electric Company Limited",
+  "effectiveDate": "2026-01-01",
+  "source": "HK Electric 2026 Tariff Press Release",
+  "sourceUrl": "https://www.hkelectric.com/documents/en/MediaResources/PressReleases/Documents/20251118_pre_TR%202026_final_website.pdf",
+  "currency": "HKD",
+  "unit": "kWh",
+  "residential": {
+    "basicTariff": 1.279,
+    "fuelCharge": 0.354,
+    "netTariff": 1.633,
+    "basicTariffCents": 127.9,
+    "fuelChargeCents": 35.4,
+    "netTariffCents": 163.3,
+    "yearOnYearChangePercent": -2.2,
+    "progressiveBlocks": [
+      { "upTo": 150, "basic": 0.863, "label": "首 150 度" },
+      { "upTo": 300, "basic": 1.002, "label": "151–300 度" },
+      { "upTo": 500, "basic": 1.141, "label": "301–500 度" },
+      { "upTo": 700, "basic": 1.377, "label": "501–700 度" },
+      { "upTo": 1000, "basic": 1.516, "label": "701–1,000 度" },
+      { "upTo": 1500, "basic": 1.655, "label": "1,001–1,500 度" },
+      { "upTo": null, "basic": 1.794, "label": "超過 1,500 度" }
+    ]
+  },
+  "lastUpdated": "2026-06-19T00:00:00+08:00"
+}
