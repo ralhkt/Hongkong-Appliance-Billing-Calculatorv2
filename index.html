@@ -4747,7 +4747,6 @@
                     HK_PROGRESSIVE_TARIFFS.clp.averageNet = netRate;
                 }
                 if (this.elements.clpRateChip) {
-                    this.elements.clpRateChip.textContent = `中電 CLP $${netRate.toFixed(3)}`;
                     this.elements.clpRateChip.dataset.rate = netRate.toFixed(3);
                 }
 
@@ -4798,7 +4797,6 @@
                         HK_PROGRESSIVE_TARIFFS.hke.averageNet = netRate;
                     }
                     if (this.elements.hkeRateChip && Number.isFinite(netRate) && netRate > 0) {
-                        this.elements.hkeRateChip.textContent = `港燈 HKE $${netRate.toFixed(3)}`;
                         this.elements.hkeRateChip.dataset.rate = netRate.toFixed(3);
                     }
 
