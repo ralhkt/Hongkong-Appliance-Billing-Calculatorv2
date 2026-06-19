@@ -3,7 +3,9 @@
   "version": "2.0.0",
   "description": "Hong Kong Appliance Electricity Bill Calculator",
   "scripts": {
-    "build": "cp index.html www/index.html && mkdir -p www/data && cp data/clp-tariff.json data/hke-tariff.json www/data/ && cp node_modules/@capacitor/core/dist/capacitor.js www/capacitor.js",
+    "build": "cp index.html www/index.html && mkdir -p www/data www/js/domain && cp data/clp-tariff.json data/hke-tariff.json www/data/ && sed 's/^export //' src/domain/appliance-search.js > www/js/domain/appliance-search.js && cp node_modules/@capacitor/core/dist/capacitor.js www/capacitor.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "cap:sync": "npm run build && npx cap sync",
     "cap:ios": "npm run cap:sync && npx cap open ios",
     "cap:run:ios": "npm run cap:sync && npx cap run ios"
@@ -20,6 +22,7 @@
     "@pantrist/capacitor-plugin-ml-kit-text-recognition": "^7.0.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.2.0"
+    "@capacitor/cli": "^7.2.0",
+    "vitest": "^3.2.4"
   }
 }

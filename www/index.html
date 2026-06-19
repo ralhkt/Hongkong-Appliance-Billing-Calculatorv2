@@ -1352,6 +1352,67 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        .appliance-picker-search-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            background: white;
+            border-bottom: 1px solid hsl(20, 5.9%, 90%);
+            flex-shrink: 0;
+        }
+
+        .appliance-picker-search-icon {
+            flex-shrink: 0;
+            color: var(--ios-gray);
+        }
+
+        .appliance-picker-search {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            background: hsl(20, 5.9%, 96%);
+            border-radius: 0.625rem;
+            padding: 0.625rem 0.75rem;
+            font-size: 1rem;
+            color: hsl(20, 14.3%, 4.1%);
+            outline: none;
+        }
+
+        .appliance-picker-search::placeholder {
+            color: var(--ios-gray);
+        }
+
+        .appliance-picker-search:focus {
+            background: hsl(20, 5.9%, 94%);
+            box-shadow: 0 0 0 2px hsla(207, 100%, 58%, 0.25);
+        }
+
+        .appliance-picker-search-clear {
+            flex-shrink: 0;
+            border: none;
+            background: hsl(20, 5.9%, 88%);
+            color: var(--ios-gray);
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 50%;
+            font-size: 1.125rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .appliance-picker-empty {
+            padding: 2rem 1.5rem;
+            text-align: center;
+            color: var(--ios-gray);
+            font-size: 0.9375rem;
+            line-height: 1.5;
+        }
+
         .appliance-picker-list {
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
@@ -1772,6 +1833,25 @@
 
             .appliance-picker-title {
                 color: hsl(0, 0%, 92%);
+            }
+
+            .appliance-picker-search-wrap {
+                background: hsl(240, 10%, 18%);
+                border-color: hsl(240, 10%, 28%);
+            }
+
+            .appliance-picker-search {
+                background: hsl(240, 10%, 22%);
+                color: hsl(0, 0%, 92%);
+            }
+
+            .appliance-picker-search:focus {
+                background: hsl(240, 10%, 26%);
+            }
+
+            .appliance-picker-search-clear {
+                background: hsl(240, 10%, 30%);
+                color: hsl(0, 0%, 80%);
             }
 
             .appliance-picker-option {
@@ -2338,12 +2418,18 @@
                 <h3 id="appliancePickerTitle" class="appliance-picker-title">選擇電器類型 Select Appliance</h3>
                 <button type="button" id="appliancePickerDone" class="appliance-picker-done">完成 Done</button>
             </div>
+            <div class="appliance-picker-search-wrap">
+                <svg class="appliance-picker-search-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+                <input type="search" id="appliancePickerSearch" class="appliance-picker-search" placeholder="搜索電器 e.g. AC、fridge、洗衣機" aria-label="搜索電器 Search appliances" autocomplete="off" enterkeyhint="search" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <button type="button" id="appliancePickerSearchClear" class="appliance-picker-search-clear" hidden aria-label="清除搜索 Clear search">×</button>
+            </div>
             <div id="appliancePickerList" class="appliance-picker-list" role="listbox" aria-labelledby="appliancePickerTitle"></div>
         </div>
     </div>
     </div>
 
     <script src="capacitor.js"></script>
+    <script src="js/domain/appliance-search.js"></script>
     <script>
         const APP_ICON_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAECUlEQVR42u3cQW4bQQxEUZ87l3f2QZBYPSSL03gC/i6xAdX3oNVF8evr1/c3cA3eBBAaIDRAaIDQIDRAaIDQAKEBQgOEBggNQgOEBggNEBogNAgNEBogNEBogNAgNEBogNAAoQFCg9AAoQFCA4QGCA1CA4QGCA0QGoT2JvyFf71++u/+938//b2f/BxC42OpT19kJvRKqZ+8nvweuRA6IvVPjy6VT3lCexNapE485UHoFqmnji4yIXRE5oqjBaEJHTludP4sQhM68oGw80lPaEJHrus675kJTejI/XN3oygnQpcKnW4U5UToMqE3NIpyInT5cFKyUZQToR8LvalRlBOhW5/Q042inAjddoZONIpyInTLLUeqUZQToT8WOjUCSmhClwudGgF15CD0Nd9e8aGQ0K8ZVqpuFOVB6Pg4qQF/Ql837F/VKMqC0McfCrtGQJ+cs+VE6KNru41LZQhN6ONjhaUyhHZFZ6kMod++h8NSGUJfdzVnqQyhLZU5/MORE6Fbp+2mG0U5EXpM6IlGUU6EXrn6q/pLBoRG+dXaRPkiJ0K3XttNN4pyIvSx0OmlMoQmdGn1nV4qQ2hClw8nJZfKEJrQLeOjqXM2oQnd+oTe0CjKidAlZ+jEXTWRCd1yy5FaKkNmQpffQyeXypCZ0Ot2cJCZ0JbKkJrQNy6VITWhr1oqQ2pCX7VUhtSEXjET3dkoyojQI+OjU42inAg98oFwqlGUE6Hbr+0mG0U5EbpE6NRSGUITulzo1LWcIweh22Y5tjSKciJ02bTdhkZRToRuETrVKMqJ0OVHjmSjKCdCl34o3NQogtAlG4s2NYogdNtddKpRJLQ3IT7o73uFhH5NDZ5oFAmN9UtlSE3oVfPRhCb0dcP+1Y2iXAg9/r3CzkZRNoSODvpXN4ryIfTYdd1EoygnQo/eP3c3inIidKnQ6UZRToQuE3pDoygnQpcPJyUbRTkRumV8NNUoyonQrU/o6UZRToRuO0MnGkU5EbrlliPVKMqJ0B8LvWWpDKEJ/VjoTUtlCE3oV357xYdCQr9mWKm6UZQHoePjpAb8CX3dsH9VoygLQh9/KNy0VIbQhH50bbdxqQyhCX18rLBUhtCu6CyVIfTb93BYKkPo667mLJUhtKUyh384ciJ067TddKMoJ0KPCT3RKMqJ0CtXf1V/yYDQKL9amyhf5ETo1mu76UZRToQ+Fjq9VIbQhC6tvtNLZQhN6PLhpORSGUITumV8NHXOJjShW5/QGxpFOREahAYIDRAaIDRAaBAaIDRAaIDQAKFBaIDQAKEBQoPQ3gQQGiA0QGiA0CA0QGiA0AChAUKD0AChAUIDhAYIDUIDhAYIDRAaIDQIDRAaIDRAaOAPfgOmEYNP3NjxEQAAAABJRU5ErkJggg=";
 
@@ -3812,6 +3898,8 @@
                 this.householdProvider = 'clp';
                 this.homeSettingsEditing = false;
                 this.currentStep = 1;
+                this.applianceSearch = new ApplianceSearchService(APPLIANCE_CATALOG, APPLIANCE_GROUPS);
+                this.appliancePickerQuery = '';
 
                 this.initializeElements();
                 this.attachEventListeners();
@@ -4000,6 +4088,8 @@
                     appliancePickerSheet: document.getElementById('appliancePickerSheet'),
                     appliancePickerBackdrop: document.getElementById('appliancePickerBackdrop'),
                     appliancePickerDone: document.getElementById('appliancePickerDone'),
+                    appliancePickerSearch: document.getElementById('appliancePickerSearch'),
+                    appliancePickerSearchClear: document.getElementById('appliancePickerSearchClear'),
                     appliancePickerList: document.getElementById('appliancePickerList'),
                     applianceRatedNote: document.getElementById('applianceRatedNote'),
                     defaultHoursHelper: document.getElementById('defaultHoursHelper'),
@@ -4010,17 +4100,31 @@
                 };
             }
 
-            renderAppliancePicker() {
+            renderAppliancePicker(query = this.appliancePickerQuery) {
                 const container = this.elements.appliancePickerList;
                 if (!container) return;
+                this.appliancePickerQuery = query;
                 container.innerHTML = '';
-                APPLIANCE_GROUPS.forEach((group) => {
+
+                const groups = this.applianceSearch.filterGroups(query);
+                if (groups.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'appliance-picker-empty';
+                    empty.textContent = '找不到相符的電器 · No matching appliances';
+                    container.appendChild(empty);
+                    return;
+                }
+
+                const showGroupHeadings = !this.applianceSearch.normalizeQuery(query);
+                groups.forEach((group) => {
                     const groupEl = document.createElement('div');
                     groupEl.className = 'appliance-picker-group';
-                    const heading = document.createElement('div');
-                    heading.className = 'appliance-picker-group-title';
-                    heading.textContent = group.title;
-                    groupEl.appendChild(heading);
+                    if (showGroupHeadings) {
+                        const heading = document.createElement('div');
+                        heading.className = 'appliance-picker-group-title';
+                        heading.textContent = group.title;
+                        groupEl.appendChild(heading);
+                    }
                     group.types.forEach((typeId) => {
                         const spec = APPLIANCE_CATALOG[typeId];
                         if (!spec) return;
@@ -4045,6 +4149,21 @@
                 });
             }
 
+            setAppliancePickerQuery(query) {
+                const normalized = this.applianceSearch.normalizeQuery(query);
+                if (this.elements.appliancePickerSearch && this.elements.appliancePickerSearch.value !== query) {
+                    this.elements.appliancePickerSearch.value = query;
+                }
+                if (this.elements.appliancePickerSearchClear) {
+                    this.elements.appliancePickerSearchClear.hidden = !normalized;
+                }
+                this.renderAppliancePicker(query);
+            }
+
+            clearAppliancePickerSearch() {
+                this.setAppliancePickerQuery('');
+            }
+
             updateAppliancePickerSelection() {
                 this.elements.appliancePickerList?.querySelectorAll('.appliance-picker-option').forEach((option) => {
                     const isActive = option.dataset.appliance === this.selectedAppliance;
@@ -4056,15 +4175,13 @@
             openAppliancePicker() {
                 const sheet = this.elements.appliancePickerSheet;
                 if (!sheet || !sheet.hidden) return;
+                this.clearAppliancePickerSearch();
                 this.updateAppliancePickerSelection();
                 sheet.hidden = false;
                 requestAnimationFrame(() => sheet.classList.add('is-open'));
                 this.elements.appliancePickerTrigger?.setAttribute('aria-expanded', 'true');
                 document.body.style.overflow = 'hidden';
-                const active = sheet.querySelector('.appliance-picker-option.active');
-                if (active) {
-                    requestAnimationFrame(() => active.scrollIntoView({ block: 'nearest' }));
-                }
+                requestAnimationFrame(() => this.elements.appliancePickerSearch?.focus({ preventScroll: true }));
             }
 
             closeAppliancePicker() {
@@ -4073,6 +4190,7 @@
                 sheet.classList.remove('is-open');
                 this.elements.appliancePickerTrigger?.setAttribute('aria-expanded', 'false');
                 document.body.style.overflow = '';
+                this.clearAppliancePickerSearch();
                 const onEnd = () => {
                     sheet.hidden = true;
                     sheet.removeEventListener('transitionend', onEnd);
@@ -4151,6 +4269,13 @@
                 this.elements.appliancePickerTrigger?.addEventListener('click', () => this.openAppliancePicker());
                 this.elements.appliancePickerBackdrop?.addEventListener('click', () => this.closeAppliancePicker());
                 this.elements.appliancePickerDone?.addEventListener('click', () => this.closeAppliancePicker());
+                this.elements.appliancePickerSearch?.addEventListener('input', (e) => {
+                    this.setAppliancePickerQuery(e.target.value);
+                });
+                this.elements.appliancePickerSearchClear?.addEventListener('click', () => {
+                    this.clearAppliancePickerSearch();
+                    this.elements.appliancePickerSearch?.focus();
+                });
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape' && !this.elements.appliancePickerSheet?.hidden) {
                         this.closeAppliancePicker();
