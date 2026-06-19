@@ -532,6 +532,59 @@
             border: 1px solid hsl(207, 100%, 90%);
         }
 
+        .tariff-note-intro {
+            margin: 0 0 0.625rem;
+        }
+
+        .tariff-note-en {
+            display: block;
+            margin-top: 0.25rem;
+            opacity: 0.85;
+            font-size: 0.6875rem;
+        }
+
+        .tariff-tier-list {
+            margin: 0 0 0.625rem;
+            padding: 0;
+            list-style: none;
+        }
+
+        .tariff-tier-list li {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.125rem 0.5rem;
+            padding: 0.375rem 0;
+            border-bottom: 1px solid hsl(207, 100%, 92%);
+        }
+
+        .tariff-tier-list li:last-child {
+            border-bottom: none;
+        }
+
+        .tariff-tier-range {
+            font-weight: 600;
+            color: hsl(20, 14.3%, 4.1%);
+        }
+
+        .tariff-tier-rate {
+            font-weight: 600;
+            color: var(--ios-blue);
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .tariff-tier-detail {
+            grid-column: 1 / -1;
+            font-size: 0.6875rem;
+            opacity: 0.92;
+        }
+
+        .tariff-note-foot {
+            margin: 0;
+            font-size: 0.6875rem;
+            opacity: 0.95;
+        }
+
         .household-compare {
             font-size: 0.75rem;
             opacity: 0.9;
@@ -1889,6 +1942,14 @@
                 color: hsl(207, 60%, 80%);
             }
 
+            .tariff-tier-range {
+                color: hsl(0, 0%, 92%);
+            }
+
+            .tariff-tier-list li {
+                border-bottom-color: hsl(207, 40%, 28%);
+            }
+
             .home-settings-card {
                 background: hsl(240, 10%, 18%);
                 border-color: hsl(240, 10%, 28%);
@@ -2381,9 +2442,9 @@
                                 <button type="button" class="rate-chip" data-household-provider="hke" id="householdHkeChip">港燈 HKE</button>
                             </div>
                         </div>
-                        <p id="householdTariffNote" class="household-tariff-note">
-                            按每月總用電量套用香港住宅累進電價（基本電費 + 燃料費），比逐件用平均電價相加更貼近實際帳單。
-                        </p>
+                        <div id="householdTariffNote" class="household-tariff-note" role="note">
+                            累進制電價說明載入中…
+                        </div>
                         <div class="household-hero">
                             <div class="household-hero-label">全屋預計年電費（累進制）· Progressive Annual Bill</div>
                             <div class="household-hero-value" id="householdAnnualCost">HK$ 0.00</div>
@@ -3021,6 +3082,29 @@
                     effectiveRate: this.effectiveRate(annualKwh, tariff),
                     tariff
                 };
+            }
+
+            static formatBlockRangeLabel(block) {
+                if (block.label.startsWith('首') || block.label.startsWith('超過')) {
+                    return `每月${block.label}`;
+                }
+                return `每月 ${block.label}`;
+            }
+
+            static formatProgressiveTariffHtml(tariff, monthlyKwh = 0, itemCount = 0) {
+                const intro = `<p class="tariff-note-intro"><strong>${tariff.label} 累進制電價</strong>：按<strong>每月</strong>總用電量分段計費。落在同一分段內的<strong>每一度電</strong>，均按該段電價收費（基本電費 + 燃料調整費），各段「用電量 × 該段電價」相加得出月費，再乘以 12 個月估算年費。<span class="tariff-note-en">Progressive tariff: each kWh within a monthly usage block is charged at that block's rate (basic + fuel). Block subtotals sum to the monthly bill.</span></p>`;
+
+                const tiers = tariff.blocks.map((block) => {
+                    const net = block.basic + tariff.fuelCharge;
+                    const range = this.formatBlockRangeLabel(block);
+                    return `<li><span class="tariff-tier-range">${range}</span><span class="tariff-tier-rate">每度 HK$${net.toFixed(3)}</span><span class="tariff-tier-detail">基本電費 HK$${block.basic.toFixed(3)} + 燃料費 HK$${tariff.fuelCharge.toFixed(3)} = 淨電價 HK$${net.toFixed(3)}/kWh</span></li>`;
+                }).join('');
+
+                const foot = itemCount > 0 && monthlyKwh > 0
+                    ? `<p class="tariff-note-foot">依你電器庫估算，全屋月均約 <strong>${monthlyKwh.toFixed(0)} 度</strong>，按以上各段逐月累加計算下方年費（比逐件用平均電價相加更貼近實際帳單）。</p>`
+                    : `<p class="tariff-note-foot">儲存電器後，將按全屋估算月用量套用以上分段計算年費。</p>`;
+
+                return `${intro}<ul class="tariff-tier-list">${tiers}</ul>${foot}`;
             }
         }
 
@@ -5145,15 +5229,6 @@
                 });
             }
 
-            formatHouseholdTariffNote(totals) {
-                const tariff = totals.tariff;
-                const tiers = tariff.blocks.map((block) => {
-                    const net = ((block.basic + tariff.fuelCharge) * 100).toFixed(1);
-                    return `${block.label} HK$${net}¢`;
-                }).join(' · ');
-                return `2026 ${tariff.label} 累進電價：${tiers}。假設全年每月平均用電 ${totals.monthlyKwh.toFixed(0)} 度，按各級累加計算。`;
-            }
-
             formatHouseholdCompare(totals) {
                 if (!totals.count || totals.annualKwh <= 0) return '';
                 const diff = totals.flatAnnualCost - totals.annualCost;
@@ -5174,7 +5249,11 @@
                 const emptyEl = this.elements.savedAppliancesEmpty;
 
                 if (this.elements.householdTariffNote) {
-                    this.elements.householdTariffNote.textContent = this.formatHouseholdTariffNote(totals);
+                    this.elements.householdTariffNote.innerHTML = ProgressiveTariffCalculator.formatProgressiveTariffHtml(
+                        totals.tariff,
+                        totals.monthlyKwh,
+                        totals.count
+                    );
                 }
                 if (this.elements.householdAnnualCost) {
                     this.elements.householdAnnualCost.textContent = this.formatHKD(totals.annualCost);
