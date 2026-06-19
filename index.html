@@ -356,16 +356,24 @@
             display: none;
             flex-direction: column;
             gap: 1rem;
-            animation: fadeIn 0.3s ease;
         }
 
         .step-view.active {
             display: flex;
+            animation: fadeIn 0.2s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .step-view.active,
+            .scan-spinner,
+            .rate-status.loading .rate-status-dot {
+                animation: none;
+            }
         }
 
         /* Card Styles */
@@ -375,6 +383,8 @@
             border: 1px solid hsl(20, 5.9%, 90%);
             overflow: visible;
             min-width: 0;
+            content-visibility: auto;
+            contain-intrinsic-size: auto 12rem;
         }
 
         .card-header {
@@ -1673,11 +1683,80 @@
                     .replace(/[（(]\s*/g, '(')
                     .replace(/\s*[）)]/g, ')')
                     .replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
-                    .replace(/[．]/g, '.');
+                    .replace(/[．]/g, '.')
+                    .replace(/[Oo]/g, '0')
+                    .replace(/[lI|]/g, '1')
+                    .replace(/[，]/g, '');
             }
 
-            static parse(text) {
+            static extractLines(text, blocks) {
+                const lines = [];
+                blocks?.forEach((block) => {
+                    block.lines?.forEach((line) => {
+                        const lineText = line.elements?.map((el) => el.text).join('').trim();
+                        if (lineText) lines.push(lineText);
+                    });
+                });
+                if (lines.length) return lines;
+                return text.split('\n').map((line) => line.trim()).filter(Boolean);
+            }
+
+            static scoreKwh(value, context) {
+                if (!Number.isFinite(value) || value <= 0 || value >= 50000) return -1;
+                let score = 0;
+                if (value >= 20 && value <= 8000) score += 12;
+                if (/kwh|千瓦|耗電|energy|consumption/i.test(context)) score += 24;
+                if (/年|annual|year/i.test(context)) score += 12;
+                if (/級|grade|效益/i.test(context)) score -= 8;
+                if (value === 1200 || value === 8760) score -= 6;
+                return score;
+            }
+
+            static pickBestKwh(candidates) {
+                if (!candidates.length) return null;
+                candidates.sort((a, b) => b.score - a.score);
+                return candidates[0].score > 0 ? candidates[0].value : null;
+            }
+
+            static collectKwhCandidates(text, lines) {
+                const candidates = [];
+                const add = (value, context) => {
+                    const score = this.scoreKwh(value, context);
+                    if (score > 0) candidates.push({ value, score });
+                };
+
+                const patterns = [
+                    /年耗電量[^0-9]{0,24}(\d{1,4}(?:\.\d+)?)\s*k?\s*wh/i,
+                    /annual\s*energy\s*consumption[^0-9]{0,24}(\d{1,4}(?:\.\d+)?)/i,
+                    /每年耗電[^0-9]{0,20}(\d{1,4}(?:\.\d+)?)/i,
+                    /耗電量[^0-9]{0,16}(\d{1,4}(?:\.\d+)?)\s*k?\s*wh/i,
+                    /(\d{1,4}(?:\.\d+)?)\s*kwh/i,
+                    /(\d{1,4}(?:\.\d+)?)\s*千瓦時/i
+                ];
+
+                for (const pattern of patterns) {
+                    const match = text.match(pattern);
+                    if (match) add(parseFloat(match[1]), match[0]);
+                }
+
+                lines.forEach((line, index) => {
+                    const context = `${line} ${lines[index + 1] || ''}`;
+                    if (/耗電|energy|kwh|千瓦|consumption/i.test(context)) {
+                        const numbers = line.match(/\d{1,4}(?:\.\d+)?/g) || [];
+                        numbers.forEach((num) => add(parseFloat(num), context));
+                    }
+                    if (/kwh|千瓦時/i.test(line)) {
+                        const numbers = line.match(/\d{1,4}(?:\.\d+)?/g) || [];
+                        numbers.forEach((num) => add(parseFloat(num), line));
+                    }
+                });
+
+                return candidates;
+            }
+
+            static parse(text, blocks = null) {
                 const normalized = this.normalize(text);
+                const lines = this.extractLines(normalized, blocks);
                 const result = {
                     kWh: null,
                     defaultHours: null,
@@ -1685,6 +1764,7 @@
                     suggestedUsageHours: null,
                     grade: null,
                     confidence: 'low',
+                    engine: 'unknown',
                     rawText: text
                 };
 
@@ -1708,53 +1788,15 @@
 
                 const gradeMatch = normalized.match(/(?:能源效益|efficiency)\s*(?:級|grade)?\s*[:：]?\s*([1-5])\s*(?:級|grade)?/i)
                     || normalized.match(/\b([1-5])\s*(?:級|grade)\b/i);
-                if (gradeMatch) {
-                    result.grade = parseInt(gradeMatch[1], 10);
-                }
+                if (gradeMatch) result.grade = parseInt(gradeMatch[1], 10);
 
-                const kwhPatterns = [
-                    /年耗電量[^0-9]{0,24}(\d{1,4}(?:\.\d+)?)\s*k?\s*wh/i,
-                    /annual\s*energy\s*consumption[^0-9]{0,24}(\d{1,4}(?:\.\d+)?)/i,
-                    /每年耗電[^0-9]{0,20}(\d{1,4}(?:\.\d+)?)/i,
-                    /耗電量[^0-9]{0,16}(\d{1,4}(?:\.\d+)?)\s*k?\s*wh/i,
-                    /(\d{1,4}(?:\.\d+)?)\s*kwh/i,
-                    /(\d{1,4}(?:\.\d+)?)\s*千瓦時/i
-                ];
-
-                for (const pattern of kwhPatterns) {
-                    const match = normalized.match(pattern);
-                    if (match) {
-                        const value = parseFloat(match[1]);
-                        if (value > 0 && value < 50000) {
-                            result.kWh = value;
-                            break;
-                        }
-                    }
-                }
-
-                if (!result.kWh) {
-                    const lines = normalized.split('\n');
-                    for (const line of lines) {
-                        if (/耗電|energy|kwh|千瓦/i.test(line)) {
-                            const numbers = line.match(/\d{2,4}(?:\.\d+)?/g);
-                            if (numbers) {
-                                const candidate = parseFloat(numbers[numbers.length - 1]);
-                                if (candidate >= 10 && candidate < 20000) {
-                                    result.kWh = candidate;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+                result.kWh = this.pickBestKwh(this.collectKwhCandidates(normalized, lines));
 
                 const hourPatterns = [
                     /(\d{3,4})\s*(?:小時|hours?|hrs?)/i,
                     /額定[^0-9]{0,20}(\d{3,4})/i,
-                    /rated[^0-9]{0,20}(\d{3,4})/i,
-                    /(?:test|測試)[^0-9]{0,20}(\d{3,4})/i
+                    /rated[^0-9]{0,20}(\d{3,4})/i
                 ];
-
                 for (const pattern of hourPatterns) {
                     const match = normalized.match(pattern);
                     if (match) {
@@ -1765,14 +1807,14 @@
                         }
                     }
                 }
-
-                if (!result.defaultHours) {
-                    result.defaultHours = 1200;
-                }
+                if (!result.defaultHours) result.defaultHours = 1200;
 
                 if (result.kWh) {
-                    const hasKeyword = /kwh|千瓦|耗電|energy/i.test(normalized);
-                    result.confidence = hasKeyword ? 'high' : 'medium';
+                    const topScore = this.collectKwhCandidates(normalized, lines)
+                        .sort((a, b) => b.score - a.score)[0]?.score || 0;
+                    if (topScore >= 30) result.confidence = 'high';
+                    else if (topScore >= 18) result.confidence = 'medium';
+                    else result.confidence = 'low';
                 }
 
                 return result;
@@ -1781,8 +1823,34 @@
 
         class LabelOCRService {
             constructor() {
-                this.worker = null;
-                this.workerPromise = null;
+                this.engWorker = null;
+                this.engWorkerPromise = null;
+                this.chiWorker = null;
+                this.mlKitPlugin = null;
+                this.lastProgressAt = 0;
+            }
+
+            getMLKitPlugin() {
+                if (!window.Capacitor?.isNativePlatform?.()) return null;
+                if (!this.mlKitPlugin) {
+                    this.mlKitPlugin = window.Capacitor.registerPlugin('CapacitorPluginMlKitTextRecognition');
+                }
+                return this.mlKitPlugin;
+            }
+
+            warmup() {
+                if (this.getMLKitPlugin()) return;
+                if (!this.engWorkerPromise) {
+                    this.engWorkerPromise = this.ensureEngWorker().catch(() => null);
+                }
+            }
+
+            reportProgress(onProgress, pct, label) {
+                if (!onProgress) return;
+                const now = Date.now();
+                if (pct < 100 && now - this.lastProgressAt < 180) return;
+                this.lastProgressAt = now;
+                onProgress(pct, label);
             }
 
             async loadTesseract() {
@@ -1797,58 +1865,133 @@
                 });
             }
 
-            async ensureWorker() {
-                if (this.worker) return this.worker;
-                if (!this.workerPromise) {
-                    this.workerPromise = (async () => {
-                        await this.loadTesseract();
-                        const worker = await Tesseract.createWorker('chi_tra+eng', 1, {
-                            logger: () => {}
-                        });
-                        this.worker = worker;
-                        return worker;
-                    })();
-                }
-                return this.workerPromise;
+            async ensureEngWorker() {
+                if (this.engWorker) return this.engWorker;
+                await this.loadTesseract();
+                const worker = await Tesseract.createWorker('eng', 1, { logger: () => {} });
+                await worker.setParameters({
+                    tessedit_pageseg_mode: '6',
+                    tessedit_char_whitelist: '0123456789.kWhKWkwhAnnualEnergyConsumption年耗電量千瓦時/-'
+                });
+                this.engWorker = worker;
+                return worker;
             }
 
-            async preprocessImage(file) {
-                const dataUrl = await new Promise((resolve, reject) => {
+            async ensureChiWorker() {
+                if (this.chiWorker) return this.chiWorker;
+                await this.loadTesseract();
+                const worker = await Tesseract.createWorker('chi_tra', 1, { logger: () => {} });
+                await worker.setParameters({ tessedit_pageseg_mode: '6' });
+                this.chiWorker = worker;
+                return worker;
+            }
+
+            fileToDataUrl(file) {
+                return new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = () => resolve(reader.result);
                     reader.onerror = () => reject(new Error('Unable to read image'));
                     reader.readAsDataURL(file);
                 });
+            }
 
+            enhanceCanvas(ctx, width, height) {
+                const imageData = ctx.getImageData(0, 0, width, height);
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                    const boosted = Math.min(255, Math.max(0, (gray - 128) * 1.45 + 128));
+                    const binary = boosted > 145 ? 255 : 0;
+                    data[i] = data[i + 1] = data[i + 2] = binary;
+                }
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            async preprocessImage(file) {
+                const dataUrl = await this.fileToDataUrl(file);
                 return new Promise((resolve, reject) => {
                     const img = new Image();
                     img.onload = () => {
-                        const maxWidth = 1800;
+                        const maxWidth = 1100;
                         const scale = Math.min(1, maxWidth / img.width);
+                        const width = Math.round(img.width * scale);
+                        const height = Math.round(img.height * scale);
                         const canvas = document.createElement('canvas');
-                        canvas.width = Math.round(img.width * scale);
-                        canvas.height = Math.round(img.height * scale);
-                        const ctx = canvas.getContext('2d');
-                        ctx.filter = 'contrast(1.25) brightness(1.05)';
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.9));
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        ctx.drawImage(img, 0, 0, width, height);
+                        this.enhanceCanvas(ctx, width, height);
+                        resolve({
+                            full: canvas.toDataURL('image/jpeg', 0.82),
+                            base64: canvas.toDataURL('image/jpeg', 0.82).split(',')[1]
+                        });
                     };
                     img.onerror = () => reject(new Error('Invalid image'));
                     img.src = dataUrl;
                 });
             }
 
-            async recognize(file, onProgress) {
-                const imageDataUrl = await this.preprocessImage(file);
-                const worker = await this.ensureWorker();
+            async recognizeNative(base64, onProgress) {
+                const plugin = this.getMLKitPlugin();
+                if (!plugin) return null;
+                this.reportProgress(onProgress, 35, '使用原生 OCR… Native OCR');
+                const result = await plugin.detectText({ base64Image: base64 });
+                this.reportProgress(onProgress, 90, '分析標籤文字… Parsing label');
+                return {
+                    text: result.text || '',
+                    blocks: result.blocks || [],
+                    engine: 'mlkit'
+                };
+            }
+
+            async recognizeTesseract(imageDataUrl, onProgress, useChinese = false) {
+                const worker = useChinese ? await this.ensureChiWorker() : await this.ensureEngWorker();
+                const label = useChinese ? '中文 OCR… Chinese OCR' : '數字 OCR… Number OCR';
                 const { data: { text } } = await worker.recognize(imageDataUrl, {}, {
                     logger: (message) => {
-                        if (message.status === 'recognizing text' && onProgress) {
-                            onProgress(Math.round((message.progress || 0) * 100));
+                        if (message.status === 'recognizing text') {
+                            const pct = Math.round((message.progress || 0) * (useChinese ? 55 : 45));
+                            this.reportProgress(onProgress, 20 + pct, label);
                         }
                     }
                 });
-                return { text, imageDataUrl };
+                return text;
+            }
+
+            mergeText(parts) {
+                return parts.filter(Boolean).join('\n');
+            }
+
+            async recognize(file, onProgress) {
+                this.lastProgressAt = 0;
+                this.reportProgress(onProgress, 5, '處理圖片… Processing image');
+                const processed = await this.preprocessImage(file);
+
+                const native = await this.recognizeNative(processed.base64, onProgress);
+                if (native?.text) {
+                    return {
+                        text: native.text,
+                        blocks: native.blocks,
+                        imageDataUrl: processed.full,
+                        engine: 'mlkit'
+                    };
+                }
+
+                this.reportProgress(onProgress, 15, '載入 OCR… Loading OCR');
+                const engText = await this.recognizeTesseract(processed.full, onProgress, false);
+                let parsed = EnergyLabelParser.parse(engText);
+                if (parsed.kWh != null && parsed.confidence !== 'low') {
+                    return { text: engText, blocks: null, imageDataUrl: processed.full, engine: 'tesseract-eng' };
+                }
+
+                const chiText = await this.recognizeTesseract(processed.full, onProgress, true);
+                return {
+                    text: this.mergeText([engText, chiText]),
+                    blocks: null,
+                    imageDataUrl: processed.full,
+                    engine: 'tesseract-mixed'
+                };
             }
         }
 
@@ -1989,20 +2132,28 @@
                     });
                 }
 
+                let focusScrollTimer = null;
                 Object.keys(this.inputs).forEach(key => {
                     if (this.elements[key]) {
                         this.elements[key].addEventListener('focus', (e) => {
-                            setTimeout(() => {
-                                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }, 300);
+                            clearTimeout(focusScrollTimer);
+                            focusScrollTimer = setTimeout(() => {
+                                e.target.scrollIntoView({ block: 'nearest' });
+                            }, 120);
                         });
                     }
                 });
 
+                const warmupOCR = () => this.labelOCRService.warmup();
+                document.getElementById('scanCard')?.addEventListener('touchstart', warmupOCR, { passive: true, once: true });
+                document.getElementById('scanCard')?.addEventListener('mouseenter', warmupOCR, { once: true });
+
                 this.elements.scanCameraBtn?.addEventListener('click', () => {
+                    warmupOCR();
                     this.elements.scanCameraInput?.click();
                 });
                 this.elements.scanAlbumBtn?.addEventListener('click', () => {
+                    warmupOCR();
                     this.elements.scanAlbumInput?.click();
                 });
                 this.elements.scanCameraInput?.addEventListener('change', (e) => {
@@ -2046,10 +2197,17 @@
                     this.elements.scanTypeValue.textContent = PRODUCT_TYPE_LABELS[typeKey] || PRODUCT_TYPE_LABELS.unknown;
                 }
                 if (this.elements.scanConfidence) {
+                    const engineLabel = parsed.engine === 'mlkit'
+                        ? '原生 OCR'
+                        : parsed.engine === 'tesseract-eng'
+                            ? '快速 OCR'
+                            : parsed.engine === 'tesseract-mixed'
+                                ? '混合 OCR'
+                                : 'OCR';
                     const labels = {
-                        high: '辨識信心：高 · High confidence',
-                        medium: '辨識信心：中 · Medium confidence',
-                        low: '辨識信心：低 · Low confidence'
+                        high: `辨識信心：高（${engineLabel}）· High confidence`,
+                        medium: `辨識信心：中（${engineLabel}）· Medium confidence`,
+                        low: `辨識信心：低（${engineLabel}）· Low confidence`
                     };
                     this.elements.scanConfidence.textContent = labels[parsed.confidence] || labels.low;
                     this.elements.scanConfidence.className = `scan-confidence ${parsed.confidence}`;
@@ -2109,13 +2267,14 @@
                 this.setScanBusy(true, '載入 OCR 引擎… Loading OCR engine…');
 
                 try {
-                    this.setScanBusy(true, '辨識標籤文字… 0% · Reading label 0%');
-                    const { text, imageDataUrl } = await this.labelOCRService.recognize(file, (pct) => {
-                        this.setScanBusy(true, `辨識標籤文字… ${pct}% · Reading label ${pct}%`);
+                    this.setScanBusy(true, '準備辨識… Preparing scan');
+                    const { text, imageDataUrl, blocks, engine } = await this.labelOCRService.recognize(file, (pct, label) => {
+                        this.setScanBusy(true, `${label} ${pct}%`);
                     });
 
-                    const parsed = EnergyLabelParser.parse(text);
+                    const parsed = EnergyLabelParser.parse(text, blocks);
                     parsed.imageDataUrl = imageDataUrl;
+                    parsed.engine = engine;
                     this.pendingScan = parsed;
                     this.showScanPreview(parsed, imageDataUrl);
 
