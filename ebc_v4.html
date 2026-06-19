@@ -35,6 +35,7 @@
             --ios-bg: hsl(240, 20%, 97%);
             --radius: 0.75rem;
             --touch-target: 44px;
+            --top-pane-height: calc(7.25rem + env(safe-area-inset-top));
         }
 
         html {
@@ -64,16 +65,22 @@
             padding: 0 max(1rem, env(safe-area-inset-left)) 0 max(1rem, env(safe-area-inset-right));
         }
 
-        /* Header Styles */
-        .header {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border-bottom: 1px solid hsl(20, 5.9%, 90%);
-            position: sticky;
+        /* Fixed top pane */
+        .top-pane {
+            position: fixed;
             top: 0;
-            z-index: 10;
-            padding: 1rem;
-            padding-top: calc(1rem + env(safe-area-inset-top));
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: white;
+            border-bottom: 1px solid hsl(20, 5.9%, 90%);
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .header {
+            background: transparent;
+            padding: 0.75rem 0 0.5rem;
         }
 
         .header-content {
@@ -135,7 +142,7 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 1rem;
+            padding-bottom: 0.625rem;
         }
 
         .step-dot {
@@ -162,6 +169,7 @@
         /* Main Content */
         .main {
             padding: 1rem 0 1.5rem;
+            padding-top: calc(var(--top-pane-height) + 0.75rem);
         }
 
         .step-view {
@@ -807,8 +815,12 @@
                 color: hsl(0, 0%, 90%);
             }
             
-            .card,
-            .header {
+            .top-pane {
+                background: hsl(240, 10%, 15%);
+                border-color: hsl(240, 10%, 25%);
+            }
+
+            .card {
                 background: hsl(240, 10%, 15%);
                 border-color: hsl(240, 10%, 25%);
             }
@@ -929,36 +941,39 @@
         <button id="iosInstallDismiss" class="ios-install-dismiss" aria-label="Dismiss">✕</button>
     </div>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="header-icon" aria-hidden="true">
-                    <svg class="svg-icon" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
-                </div>
-                <div class="header-text">
-                    <h1>香港電費計算器</h1>
-                    <p id="headerSubtitle">Hong Kong Electricity Calculator</p>
-                </div>
-                <div class="header-actions">
-                    <button id="backBtn" class="back-btn" type="button" aria-label="Back to input">
-                        <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-                        返回
-                    </button>
+    <!-- Fixed top pane: header + step indicator -->
+    <div class="top-pane" id="topPane">
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="header-icon" aria-hidden="true">
+                        <svg class="svg-icon" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+                    </div>
+                    <div class="header-text">
+                        <h1>香港電費計算器</h1>
+                        <p id="headerSubtitle">Hong Kong Electricity Calculator</p>
+                    </div>
+                    <div class="header-actions">
+                        <button id="backBtn" class="back-btn" type="button" aria-label="Back to input">
+                            <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                            返回
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main">
+        </header>
         <div class="container">
             <div class="step-indicator" aria-hidden="true">
                 <span class="step-dot active" id="stepDot1"></span>
                 <span class="step-dot" id="stepDot2"></span>
                 <span class="step-label" id="stepLabel">步驟 1/2 · 輸入參數</span>
             </div>
+        </div>
+    </div>
 
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
             <!-- Step 1: Input -->
             <div id="stepInput" class="step-view active">
                 <div id="errorAlert" class="alert hidden">
@@ -1587,6 +1602,7 @@
                 }
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                requestAnimationFrame(updateTopPaneHeight);
             }
 
             goToResults() {
@@ -1683,8 +1699,20 @@
             }
         }
 
+        function updateTopPaneHeight() {
+            const pane = document.getElementById('topPane');
+            if (pane) {
+                document.documentElement.style.setProperty(
+                    '--top-pane-height',
+                    `${pane.offsetHeight}px`
+                );
+            }
+        }
+
         // Initialize calculator when page loads
         document.addEventListener('DOMContentLoaded', () => {
+            updateTopPaneHeight();
+            window.addEventListener('resize', updateTopPaneHeight);
             new ElectricityCalculator();
         });
 

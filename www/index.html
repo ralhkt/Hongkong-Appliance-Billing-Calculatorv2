@@ -35,6 +35,7 @@
             --ios-bg: hsl(240, 20%, 97%);
             --radius: 0.75rem;
             --touch-target: 44px;
+            --top-pane-height: calc(7.25rem + env(safe-area-inset-top));
         }
 
         html {
@@ -64,16 +65,22 @@
             padding: 0 max(1rem, env(safe-area-inset-left)) 0 max(1rem, env(safe-area-inset-right));
         }
 
-        /* Header Styles */
-        .header {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border-bottom: 1px solid hsl(20, 5.9%, 90%);
-            position: sticky;
+        /* Fixed top pane */
+        .top-pane {
+            position: fixed;
             top: 0;
-            z-index: 10;
-            padding: 1rem;
-            padding-top: calc(1rem + env(safe-area-inset-top));
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: white;
+            border-bottom: 1px solid hsl(20, 5.9%, 90%);
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .header {
+            background: transparent;
+            padding: 0.75rem 0 0.5rem;
         }
 
         .header-content {
@@ -135,7 +142,7 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 1rem;
+            padding-bottom: 0.625rem;
         }
 
         .step-dot {
@@ -162,6 +169,7 @@
         /* Main Content */
         .main {
             padding: 1rem 0 1.5rem;
+            padding-top: calc(var(--top-pane-height) + 0.75rem);
         }
 
         .step-view {
@@ -512,14 +520,16 @@
             overflow-wrap: anywhere;
         }
 
-        .rate-presets {
+        .rate-presets,
+        .usage-presets {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
             margin-top: 0.25rem;
         }
 
-        .rate-chip {
+        .rate-chip,
+        .usage-chip {
             padding: 0.5rem 0.75rem;
             border-radius: 999px;
             border: 1px solid hsl(20, 5.9%, 90%);
@@ -533,11 +543,13 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .rate-chip:active {
+        .rate-chip:active,
+        .usage-chip:active {
             transform: scale(0.97);
         }
 
-        .rate-chip.active {
+        .rate-chip.active,
+        .usage-chip.active {
             background: var(--ios-blue);
             border-color: var(--ios-blue);
             color: white;
@@ -803,8 +815,12 @@
                 color: hsl(0, 0%, 90%);
             }
             
-            .card,
-            .header {
+            .top-pane {
+                background: hsl(240, 10%, 15%);
+                border-color: hsl(240, 10%, 25%);
+            }
+
+            .card {
                 background: hsl(240, 10%, 15%);
                 border-color: hsl(240, 10%, 25%);
             }
@@ -869,13 +885,15 @@
                 color: hsl(0, 80%, 85%);
             }
 
-            .rate-chip {
+            .rate-chip,
+            .usage-chip {
                 background: hsl(240, 10%, 20%);
                 border-color: hsl(240, 10%, 30%);
                 color: hsl(0, 0%, 90%);
             }
 
-            .rate-chip.active {
+            .rate-chip.active,
+            .usage-chip.active {
                 background: var(--ios-blue);
                 border-color: var(--ios-blue);
             }
@@ -923,36 +941,39 @@
         <button id="iosInstallDismiss" class="ios-install-dismiss" aria-label="Dismiss">✕</button>
     </div>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="header-icon" aria-hidden="true">
-                    <svg class="svg-icon" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
-                </div>
-                <div class="header-text">
-                    <h1>香港電費計算器</h1>
-                    <p id="headerSubtitle">Hong Kong Electricity Calculator</p>
-                </div>
-                <div class="header-actions">
-                    <button id="backBtn" class="back-btn" type="button" aria-label="Back to input">
-                        <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-                        返回
-                    </button>
+    <!-- Fixed top pane: header + step indicator -->
+    <div class="top-pane" id="topPane">
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="header-icon" aria-hidden="true">
+                        <svg class="svg-icon" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+                    </div>
+                    <div class="header-text">
+                        <h1>香港電費計算器</h1>
+                        <p id="headerSubtitle">Hong Kong Electricity Calculator</p>
+                    </div>
+                    <div class="header-actions">
+                        <button id="backBtn" class="back-btn" type="button" aria-label="Back to input">
+                            <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                            返回
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main">
+        </header>
         <div class="container">
             <div class="step-indicator" aria-hidden="true">
                 <span class="step-dot active" id="stepDot1"></span>
                 <span class="step-dot" id="stepDot2"></span>
                 <span class="step-label" id="stepLabel">步驟 1/2 · 輸入參數</span>
             </div>
+        </div>
+    </div>
 
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
             <!-- Step 1: Input -->
             <div id="stepInput" class="step-view active">
                 <div id="errorAlert" class="alert hidden">
@@ -990,7 +1011,16 @@
                                 />
                                 <span class="input-unit">小時 hrs</span>
                             </div>
-                            <p class="helper-text">您預計該電器全年實際運作時數 · Your estimated annual running hours</p>
+                            <div class="usage-presets" role="group" aria-label="Usage hours presets">
+                                <button type="button" class="usage-chip active" data-hours="8760" data-preset="yearly-247" title="365 days × 24 hours">全年 24/7</button>
+                                <button type="button" class="usage-chip" data-hours="2920" data-preset="yearly-8h" title="365 days × 8 hours/day">每日 8小時</button>
+                                <button type="button" class="usage-chip" data-hours="1460" data-preset="yearly-4h" title="365 days × 4 hours/day">每日 4小時</button>
+                                <button type="button" class="usage-chip" data-hours="2000" data-preset="office" title="250 weekdays × 8 hours">辦公日 Office</button>
+                                <button type="button" class="usage-chip" data-hours="1104" data-preset="summer-q" title="Jun–Aug, 12 hours/day × 92 days">夏季季度 Summer</button>
+                                <button type="button" class="usage-chip" data-hours="552" data-preset="winter-q" title="Dec–Feb, 6 hours/day × 92 days">冬季季度 Winter</button>
+                                <button type="button" class="usage-chip" data-hours="832" data-preset="weekend" title="52 weekends × 16 hours">週末 Weekend</button>
+                            </div>
+                            <p class="helper-text">選擇預設或自行輸入全年實際運作時數 · Pick a preset or enter your annual running hours</p>
                         </div>
 
                         <!-- Default Hours Input -->
@@ -1370,6 +1400,7 @@
                     monthlyCostValue: document.getElementById('monthlyCostValue'),
                     dailyCostValue: document.getElementById('dailyCostValue'),
                     rateChips: document.querySelectorAll('.rate-chip'),
+                    usageChips: document.querySelectorAll('.usage-chip'),
                     clpRateChip: document.getElementById('clpRateChip'),
                     rateStatus: document.getElementById('rateStatus'),
                     rateStatusText: document.getElementById('rateStatusText'),
@@ -1400,6 +1431,27 @@
                         chip.classList.add('active');
                     });
                 });
+
+                this.elements.usageChips?.forEach((chip) => {
+                    chip.addEventListener('click', () => {
+                        const hours = parseInt(chip.dataset.hours, 10);
+                        if (this.elements.usageHours && Number.isFinite(hours)) {
+                            this.elements.usageHours.value = hours;
+                        }
+                        this.elements.usageChips.forEach((c) => c.classList.remove('active'));
+                        chip.classList.add('active');
+                    });
+                });
+
+                if (this.elements.usageHours) {
+                    this.elements.usageHours.addEventListener('input', () => {
+                        const current = parseInt(this.elements.usageHours.value, 10);
+                        this.elements.usageChips?.forEach((chip) => {
+                            const chipHours = parseInt(chip.dataset.hours, 10);
+                            chip.classList.toggle('active', chipHours === current);
+                        });
+                    });
+                }
 
                 if (this.elements.costPerKWh) {
                     this.elements.costPerKWh.addEventListener('input', () => {
@@ -1550,6 +1602,7 @@
                 }
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                requestAnimationFrame(updateTopPaneHeight);
             }
 
             goToResults() {
@@ -1646,8 +1699,20 @@
             }
         }
 
+        function updateTopPaneHeight() {
+            const pane = document.getElementById('topPane');
+            if (pane) {
+                document.documentElement.style.setProperty(
+                    '--top-pane-height',
+                    `${pane.offsetHeight}px`
+                );
+            }
+        }
+
         // Initialize calculator when page loads
         document.addEventListener('DOMContentLoaded', () => {
+            updateTopPaneHeight();
+            window.addEventListener('resize', updateTopPaneHeight);
             new ElectricityCalculator();
         });
 
