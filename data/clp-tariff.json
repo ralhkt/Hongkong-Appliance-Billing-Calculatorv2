@@ -1,0 +1,18 @@
+{
+  "provider": "CLP Power Hong Kong Limited",
+  "effectiveDate": "2026-01-01",
+  "source": "Environment and Ecology Bureau — 2026 Electricity Tariff Adjustment",
+  "sourceUrl": "https://www.info.gov.hk/gia/general/202511/18/P2025111800787.htm",
+  "currency": "HKD",
+  "unit": "kWh",
+  "residential": {
+    "basicTariff": 1.012,
+    "fuelCharge": 0.394,
+    "netTariff": 1.406,
+    "basicTariffCents": 101.2,
+    "fuelChargeCents": 39.4,
+    "netTariffCents": 140.6,
+    "yearOnYearChangePercent": -2.6
+  },
+  "lastUpdated": "2026-06-19T00:00:00+08:00"
+}

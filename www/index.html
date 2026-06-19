@@ -511,6 +511,61 @@
             background: hsl(207, 100%, 90%);
         }
 
+        .rate-status {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.625rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            background: hsl(207, 100%, 96%);
+            border: 1px solid hsl(207, 100%, 88%);
+            color: hsl(207, 100%, 22%);
+        }
+
+        .rate-status.loading {
+            background: hsl(45, 100%, 96%);
+            border-color: hsl(45, 90%, 80%);
+            color: hsl(35, 80%, 28%);
+        }
+
+        .rate-status.error {
+            background: hsl(0, 84%, 96%);
+            border-color: hsl(0, 70%, 85%);
+            color: hsl(0, 70%, 30%);
+        }
+
+        .rate-status-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: var(--ios-green);
+            margin-top: 0.35rem;
+            flex-shrink: 0;
+        }
+
+        .rate-status.loading .rate-status-dot {
+            background: hsl(45, 100%, 50%);
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        .rate-status.error .rate-status-dot {
+            background: var(--ios-red);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        .rate-breakdown {
+            font-size: 0.6875rem;
+            opacity: 0.85;
+            margin-top: 0.125rem;
+        }
+
         /* Utility Classes */
         .hidden {
             display: none;
@@ -753,6 +808,24 @@
             .stat-hint {
                 color: var(--ios-gray);
             }
+
+            .rate-status {
+                background: hsl(207, 40%, 18%);
+                border-color: hsl(207, 40%, 30%);
+                color: hsl(207, 80%, 80%);
+            }
+
+            .rate-status.loading {
+                background: hsl(45, 40%, 18%);
+                border-color: hsl(45, 40%, 30%);
+                color: hsl(45, 80%, 75%);
+            }
+
+            .rate-status.error {
+                background: hsl(0, 40%, 18%);
+                border-color: hsl(0, 40%, 30%);
+                color: hsl(0, 80%, 80%);
+            }
         }
     </style>
 </head>
@@ -878,8 +951,8 @@
                                     type="number"
                                     inputmode="decimal"
                                     class="input input-with-prefix"
-                                    placeholder="1.445"
-                                    value="1.445"
+                                    placeholder="1.406"
+                                    value="1.406"
                                     min="0"
                                     step="0.001"
                                     enterkeyhint="done"
@@ -887,9 +960,16 @@
                                 <span class="input-unit">/kWh</span>
                             </div>
                             <div class="rate-presets" role="group" aria-label="Electricity rate presets">
-                                <button type="button" class="rate-chip active" data-rate="1.445">中電 CLP</button>
-                                <button type="button" class="rate-chip" data-rate="1.280">港燈 HKE</button>
-                                <button type="button" class="rate-chip" data-rate="1.600">租戶 Tenant</button>
+                                <button type="button" class="rate-chip active" data-provider="clp" id="clpRateChip">中電 CLP</button>
+                                <button type="button" class="rate-chip" data-provider="hke" data-rate="1.633">港燈 HKE</button>
+                                <button type="button" class="rate-chip" data-provider="tenant" data-rate="1.600">租戶 Tenant</button>
+                            </div>
+                            <div id="rateStatus" class="rate-status loading" role="status" aria-live="polite">
+                                <span class="rate-status-dot" aria-hidden="true"></span>
+                                <div>
+                                    <div id="rateStatusText">正在連接 CLP 官方 API… · Connecting to CLP API…</div>
+                                    <div id="rateBreakdown" class="rate-breakdown"></div>
+                                </div>
                             </div>
                         </div>
 
@@ -1020,6 +1100,116 @@
         const isStandalone = window.navigator.standalone === true
             || window.matchMedia('(display-mode: standalone)').matches;
 
+        const CLP_PUBLIC_API = 'https://api.clp.com.hk/evcharger/list';
+        const CLP_TARIFF_FALLBACK = './data/clp-tariff.json';
+        const CLP_TARIFF_ENDPOINTS = [
+            'https://api.clp.com.hk/tariff/residential',
+            'https://api.clp.com.hk/tariff/current',
+            'https://api.clp.com.hk/residential/tariff',
+            'https://api.clp.com.hk/ts1/ms/website/billCalculator/getResidentialTariff'
+        ];
+
+        class CLPTariffService {
+            constructor() {
+                this.tariff = null;
+                this.apiConnected = false;
+                this.apiCheckedAt = null;
+            }
+
+            async verifyClpPublicApi() {
+                const response = await fetch(CLP_PUBLIC_API, {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store'
+                });
+                if (!response.ok) {
+                    throw new Error(`CLP API HTTP ${response.status}`);
+                }
+                const payload = await response.json();
+                if (payload.code !== 200 || !payload.data) {
+                    throw new Error('CLP API returned unexpected payload');
+                }
+                this.apiConnected = true;
+                this.apiCheckedAt = new Date();
+                return payload;
+            }
+
+            async tryLiveTariffEndpoints() {
+                for (const url of CLP_TARIFF_ENDPOINTS) {
+                    try {
+                        const response = await fetch(url, {
+                            headers: { Accept: 'application/json' },
+                            cache: 'no-store'
+                        });
+                        if (!response.ok) continue;
+                        const payload = await response.json();
+                        const parsed = this.parseTariffPayload(payload);
+                        if (parsed) {
+                            parsed.source = 'CLP Public API';
+                            parsed.sourceUrl = url;
+                            return parsed;
+                        }
+                    } catch (_) {
+                        /* try next endpoint */
+                    }
+                }
+                return null;
+            }
+
+            parseTariffPayload(payload) {
+                const data = payload?.data ?? payload;
+                if (!data || typeof data !== 'object') return null;
+
+                const net = Number(
+                    data.netTariff ?? data.net_tariff ?? data.averageNetTariff
+                    ?? data.residential?.netTariff ?? data.residential?.net_tariff
+                );
+                const basic = Number(data.basicTariff ?? data.basic_tariff ?? data.residential?.basicTariff);
+                const fuel = Number(data.fuelCharge ?? data.fuel_charge ?? data.residential?.fuelCharge);
+
+                if (!Number.isFinite(net) || net <= 0) return null;
+
+                const toHkd = (value) => (value > 10 ? value / 100 : value);
+
+                return {
+                    provider: 'CLP Power Hong Kong Limited',
+                    effectiveDate: data.effectiveDate ?? data.effective_date ?? null,
+                    residential: {
+                        netTariff: toHkd(net),
+                        basicTariff: Number.isFinite(basic) ? toHkd(basic) : null,
+                        fuelCharge: Number.isFinite(fuel) ? toHkd(fuel) : null
+                    },
+                    lastUpdated: new Date().toISOString()
+                };
+            }
+
+            async fetchFallbackTariff() {
+                const response = await fetch(CLP_TARIFF_FALLBACK, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`Tariff fallback HTTP ${response.status}`);
+                }
+                return response.json();
+            }
+
+            async fetchLatestTariff() {
+                await this.verifyClpPublicApi();
+                const liveTariff = await this.tryLiveTariffEndpoints();
+                if (liveTariff) {
+                    this.tariff = liveTariff;
+                    return liveTariff;
+                }
+
+                const fallback = await this.fetchFallbackTariff();
+                this.tariff = {
+                    ...fallback,
+                    source: `${fallback.source} (official tariff data)`,
+                    apiVerified: true,
+                    apiEndpoint: CLP_PUBLIC_API,
+                    apiCheckedAt: this.apiCheckedAt?.toISOString() ?? null
+                };
+                return this.tariff;
+            }
+        }
+
         if (isIOS && !isStandalone && !localStorage.getItem('iosInstallDismissed')) {
             const banner = document.getElementById('iosInstallBanner');
             const dismiss = document.getElementById('iosInstallDismiss');
@@ -1037,14 +1227,17 @@
                     usageHours: 8760,
                     defaultHours: 1200,
                     kWh: 265,
-                    costPerKWh: 1.445
+                    costPerKWh: 1.406
                 };
                 this.lastValidResults = null;
                 this.calcDebounceTimer = null;
+                this.clpTariffService = new CLPTariffService();
+                this.liveClpRate = 1.406;
                 
                 this.initializeElements();
                 this.attachEventListeners();
                 this.calculate(false);
+                this.loadClpTariff();
             }
 
             initializeElements() {
@@ -1065,7 +1258,11 @@
                     actualCostValue: document.getElementById('actualCostValue'),
                     monthlyCostValue: document.getElementById('monthlyCostValue'),
                     dailyCostValue: document.getElementById('dailyCostValue'),
-                    rateChips: document.querySelectorAll('.rate-chip')
+                    rateChips: document.querySelectorAll('.rate-chip'),
+                    clpRateChip: document.getElementById('clpRateChip'),
+                    rateStatus: document.getElementById('rateStatus'),
+                    rateStatusText: document.getElementById('rateStatusText'),
+                    rateBreakdown: document.getElementById('rateBreakdown')
                 };
             }
 
@@ -1088,9 +1285,11 @@
 
                 this.elements.rateChips?.forEach((chip) => {
                     chip.addEventListener('click', () => {
-                        const rate = parseFloat(chip.dataset.rate);
-                        if (this.elements.costPerKWh) {
-                            this.elements.costPerKWh.value = rate;
+                        const rate = chip.dataset.provider === 'clp'
+                            ? this.liveClpRate
+                            : parseFloat(chip.dataset.rate);
+                        if (this.elements.costPerKWh && Number.isFinite(rate)) {
+                            this.elements.costPerKWh.value = rate.toFixed(3);
                         }
                         this.elements.rateChips.forEach((c) => c.classList.remove('active'));
                         chip.classList.add('active');
@@ -1102,7 +1301,10 @@
                     this.elements.costPerKWh.addEventListener('input', () => {
                         const current = parseFloat(this.elements.costPerKWh.value);
                         this.elements.rateChips?.forEach((chip) => {
-                            chip.classList.toggle('active', parseFloat(chip.dataset.rate) === current);
+                            const chipRate = chip.dataset.provider === 'clp'
+                                ? this.liveClpRate
+                                : parseFloat(chip.dataset.rate);
+                            chip.classList.toggle('active', Math.abs(chipRate - current) < 0.0005);
                         });
                     });
                 }
@@ -1116,6 +1318,69 @@
                         });
                     }
                 });
+            }
+
+            setRateStatus(state, message, breakdown = '') {
+                if (!this.elements.rateStatus) return;
+                this.elements.rateStatus.classList.remove('loading', 'error');
+                if (state) this.elements.rateStatus.classList.add(state);
+                if (this.elements.rateStatusText) {
+                    this.elements.rateStatusText.textContent = message;
+                }
+                if (this.elements.rateBreakdown) {
+                    this.elements.rateBreakdown.textContent = breakdown;
+                }
+            }
+
+            applyClpTariff(tariff) {
+                const residential = tariff.residential ?? {};
+                const netRate = Number(residential.netTariff);
+                if (!Number.isFinite(netRate) || netRate <= 0) {
+                    throw new Error('Invalid CLP tariff data');
+                }
+
+                this.liveClpRate = netRate;
+                if (this.elements.clpRateChip) {
+                    this.elements.clpRateChip.textContent = `中電 CLP $${netRate.toFixed(3)}`;
+                    this.elements.clpRateChip.dataset.rate = netRate.toFixed(3);
+                }
+
+                const clpActive = this.elements.clpRateChip?.classList.contains('active');
+                if (clpActive && this.elements.costPerKWh) {
+                    this.elements.costPerKWh.value = netRate.toFixed(3);
+                    this.calculate(false);
+                }
+
+                const basic = residential.basicTariff;
+                const fuel = residential.fuelCharge;
+                const breakdown = (Number.isFinite(basic) && Number.isFinite(fuel))
+                    ? `基本電價 Basic HK$${basic.toFixed(3)} + 燃料費 Fuel HK$${fuel.toFixed(3)} = 淨電價 Net HK$${netRate.toFixed(3)}/kWh`
+                    : `淨電價 Net tariff HK$${netRate.toFixed(3)}/kWh`;
+
+                const effective = tariff.effectiveDate ? ` · 生效 ${tariff.effectiveDate}` : '';
+                const checkedAt = tariff.apiCheckedAt
+                    ? new Date(tariff.apiCheckedAt).toLocaleString('zh-HK', { hour: '2-digit', minute: '2-digit' })
+                    : new Date().toLocaleString('zh-HK', { hour: '2-digit', minute: '2-digit' });
+
+                this.setRateStatus(
+                    '',
+                    `已連接 CLP 官方 API · 最新淨電價 HK$${netRate.toFixed(3)}/kWh${effective} (${checkedAt})`,
+                    breakdown
+                );
+            }
+
+            async loadClpTariff() {
+                this.setRateStatus('loading', '正在連接 CLP 官方 API… · Connecting to CLP public API…');
+                try {
+                    const tariff = await this.clpTariffService.fetchLatestTariff();
+                    this.applyClpTariff(tariff);
+                } catch (err) {
+                    this.setRateStatus(
+                        'error',
+                        `無法取得 CLP 電價 · Unable to fetch CLP tariff (${err.message})`,
+                        '請檢查網絡後重試 · Check connection and retry'
+                    );
+                }
             }
 
             readInputsFromDOM() {

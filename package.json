@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Hong Kong Appliance Electricity Bill Calculator",
   "scripts": {
-    "build": "cp index.html www/index.html",
+    "build": "cp index.html www/index.html && mkdir -p www/data && cp data/clp-tariff.json www/data/clp-tariff.json",
     "cap:sync": "npm run build && npx cap sync",
     "cap:ios": "npm run cap:sync && npx cap open ios",
     "cap:run:ios": "npm run cap:sync && npx cap run ios"
