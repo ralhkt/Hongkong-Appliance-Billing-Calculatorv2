@@ -2197,7 +2197,7 @@
                             </div>
                             <div class="rate-presets" role="group" aria-label="Electricity rate presets">
                                 <button type="button" class="rate-chip active" data-provider="clp" id="clpRateChip">中電 CLP</button>
-                                <button type="button" class="rate-chip" data-provider="hke" data-rate="1.633">港燈 HKE</button>
+                                <button type="button" class="rate-chip" data-provider="hke" data-rate="1.633" id="hkeRateChip">港燈 HKE</button>
                                 <button type="button" class="rate-chip" data-provider="tenant" data-rate="1.600">租戶 Tenant</button>
                             </div>
                             <div id="rateStatus" class="rate-status loading" role="status" aria-live="polite">
@@ -2466,6 +2466,8 @@
 
         const CLP_PUBLIC_API = 'https://api.clp.com.hk/evcharger/list';
         const CLP_TARIFF_FALLBACK = './data/clp-tariff.json';
+        const HKE_TARIFF_FALLBACK = './data/hke-tariff.json';
+        const TENANT_REFERENCE_RATE = 1.600;
         const CLP_TARIFF_ENDPOINTS = [
             'https://api.clp.com.hk/tariff/residential',
             'https://api.clp.com.hk/tariff/current',
@@ -3895,6 +3897,8 @@
                 this.editingSavedId = null;
                 this.cameraPlugin = null;
                 this.liveClpRate = 1.406;
+                this.clpTariffSnapshot = null;
+                this.hkeTariffMeta = null;
                 this.householdProvider = 'clp';
                 this.homeSettingsEditing = false;
                 this.currentStep = 1;
@@ -3914,6 +3918,7 @@
                     this.setHomeSettingsEditMode(false);
                     this.updateSavedBadge();
                     this.loadClpTariff();
+                    this.loadHkeTariffReference();
                     this.startCloudSync();
                 } catch (err) {
                     console.error('Calculator init error', err);
@@ -4063,9 +4068,10 @@
                     actualCostValue: document.getElementById('actualCostValue'),
                     monthlyCostValue: document.getElementById('monthlyCostValue'),
                     dailyCostValue: document.getElementById('dailyCostValue'),
-                    rateChips: document.querySelectorAll('.rate-chip'),
+                    rateChips: document.querySelectorAll('[data-provider]'),
                     usageChips: document.querySelectorAll('.usage-chip'),
                     clpRateChip: document.getElementById('clpRateChip'),
+                    hkeRateChip: document.getElementById('hkeRateChip'),
                     rateStatus: document.getElementById('rateStatus'),
                     rateStatusText: document.getElementById('rateStatusText'),
                     rateBreakdown: document.getElementById('rateBreakdown'),
@@ -4315,6 +4321,7 @@
                         }
                         this.elements.rateChips.forEach((c) => c.classList.remove('active'));
                         chip.classList.add('active');
+                        this.updateRateStatusDisplay(chip.dataset.provider);
                     });
                 });
 
@@ -4342,12 +4349,18 @@
                 if (this.elements.costPerKWh) {
                     this.elements.costPerKWh.addEventListener('input', () => {
                         const current = parseFloat(this.elements.costPerKWh.value);
+                        let matchedProvider = null;
                         this.elements.rateChips?.forEach((chip) => {
                             const chipRate = chip.dataset.provider === 'clp'
                                 ? this.liveClpRate
                                 : parseFloat(chip.dataset.rate);
-                            chip.classList.toggle('active', Math.abs(chipRate - current) < 0.0005);
+                            const isActive = Number.isFinite(chipRate) && Math.abs(chipRate - current) < 0.0005;
+                            chip.classList.toggle('active', isActive);
+                            if (isActive) matchedProvider = chip.dataset.provider;
                         });
+                        if (matchedProvider) {
+                            this.updateRateStatusDisplay(matchedProvider);
+                        }
                     });
                 }
 
@@ -4642,6 +4655,82 @@
                 }
             }
 
+            getSelectedRateProvider() {
+                const active = document.querySelector('[data-provider].rate-chip.active');
+                return active?.dataset.provider || 'clp';
+            }
+
+            formatTariffBreakdown(basic, fuel, net) {
+                if (Number.isFinite(basic) && Number.isFinite(fuel) && Number.isFinite(net)) {
+                    return `基本電價 Basic HK$${basic.toFixed(3)} + 燃料費 Fuel HK$${fuel.toFixed(3)} = 淨電價 Net HK$${net.toFixed(3)}/kWh`;
+                }
+                return `淨電價 Net tariff HK$${net.toFixed(3)}/kWh`;
+            }
+
+            updateRateStatusDisplay(provider = this.getSelectedRateProvider()) {
+                if (provider === 'clp') {
+                    if (this.clpTariffSnapshot) {
+                        this.renderClpRateStatus(this.clpTariffSnapshot);
+                    } else if (this.elements.rateStatus?.classList.contains('loading')) {
+                        return;
+                    } else {
+                        this.setRateStatus(
+                            '',
+                            `中電 CLP 參考電價 HK$${this.liveClpRate.toFixed(3)}/kWh`,
+                            this.formatTariffBreakdown(
+                                HK_PROGRESSIVE_TARIFFS.clp.averageNet - HK_PROGRESSIVE_TARIFFS.clp.fuelCharge,
+                                HK_PROGRESSIVE_TARIFFS.clp.fuelCharge,
+                                this.liveClpRate
+                            )
+                        );
+                    }
+                    return;
+                }
+
+                if (provider === 'hke') {
+                    const tariff = HK_PROGRESSIVE_TARIFFS.hke;
+                    const net = tariff.averageNet;
+                    const fuel = tariff.fuelCharge;
+                    const basic = this.hkeTariffMeta?.basicTariff ?? (net - fuel);
+                    const effective = this.hkeTariffMeta?.effectiveDate ? ` · 生效 ${this.hkeTariffMeta.effectiveDate}` : '';
+                    const source = this.hkeTariffMeta?.source
+                        ? ` · ${this.hkeTariffMeta.source}`
+                        : ' · HK Electric 2026 Tariff';
+                    this.setRateStatus(
+                        '',
+                        `港燈 HKE 參考電價 HK$${net.toFixed(3)}/kWh${effective}`,
+                        `${this.formatTariffBreakdown(basic, fuel, net)}${source}`
+                    );
+                    return;
+                }
+
+                if (provider === 'tenant') {
+                    this.setRateStatus(
+                        '',
+                        `租戶參考電價 HK$${TENANT_REFERENCE_RATE.toFixed(3)}/kWh`,
+                        '適用於大廈分間電錶等租戶電價估算 · Reference rate for subdivided-unit meters'
+                    );
+                }
+            }
+
+            renderClpRateStatus(tariff) {
+                const residential = tariff.residential ?? {};
+                const netRate = Number(residential.netTariff) || this.liveClpRate;
+                const basic = Number(residential.basicTariff);
+                const fuel = Number(residential.fuelCharge);
+                const breakdown = this.formatTariffBreakdown(
+                    Number.isFinite(basic) ? basic : null,
+                    Number.isFinite(fuel) ? fuel : null,
+                    netRate
+                );
+                const effective = tariff.effectiveDate ? ` · 生效 ${tariff.effectiveDate}` : '';
+                this.setRateStatus(
+                    '',
+                    `中電 CLP 即時電價 HK$${netRate.toFixed(3)}/kWh${effective}`,
+                    breakdown
+                );
+            }
+
             applyClpTariff(tariff) {
                 const residential = tariff.residential ?? {};
                 const netRate = Number(residential.netTariff);
@@ -4662,39 +4751,71 @@
                     this.elements.clpRateChip.dataset.rate = netRate.toFixed(3);
                 }
 
+                this.clpTariffSnapshot = tariff;
+
                 const clpActive = this.elements.clpRateChip?.classList.contains('active');
                 if (clpActive && this.elements.costPerKWh) {
                     this.elements.costPerKWh.value = netRate.toFixed(3);
                 }
 
-                const basic = Number(residential.basicTariff);
-                const breakdown = (Number.isFinite(basic) && Number.isFinite(fuel))
-                    ? `基本電價 Basic HK$${basic.toFixed(3)} + 燃料費 Fuel HK$${fuel.toFixed(3)} = 淨電價 Net HK$${netRate.toFixed(3)}/kWh`
-                    : `淨電價 Net tariff HK$${netRate.toFixed(3)}/kWh`;
-
-                const effective = tariff.effectiveDate ? ` · 生效 ${tariff.effectiveDate}` : '';
-                const checkedAt = tariff.apiCheckedAt
-                    ? new Date(tariff.apiCheckedAt).toLocaleString('zh-HK', { hour: '2-digit', minute: '2-digit' })
-                    : new Date().toLocaleString('zh-HK', { hour: '2-digit', minute: '2-digit' });
-
-                this.setRateStatus(
-                    '',
-                    `CLP 即時電價 HK$${netRate.toFixed(3)}/kWh${effective}`,
-                    breakdown
-                );
+                if (this.getSelectedRateProvider() === 'clp') {
+                    this.renderClpRateStatus(tariff);
+                }
             }
 
             async loadClpTariff() {
-                this.setRateStatus('loading', '正在連接 CLP 官方 API… · Connecting to CLP public API…');
+                if (this.getSelectedRateProvider() === 'clp') {
+                    this.setRateStatus('loading', '正在連接中電 CLP 官方 API… · Connecting to CLP API…');
+                }
                 try {
                     const tariff = await this.clpTariffService.fetchLatestTariff();
                     this.applyClpTariff(tariff);
                 } catch (err) {
-                    this.setRateStatus(
-                        'error',
-                        `無法取得 CLP 電價 · Unable to fetch CLP tariff (${err.message})`,
-                        '請檢查網絡後重試 · Check connection and retry'
-                    );
+                    if (this.getSelectedRateProvider() === 'clp') {
+                        this.setRateStatus(
+                            'error',
+                            `無法取得中電 CLP 電價 · Unable to fetch CLP tariff (${err.message})`,
+                            '請檢查網絡後重試 · Check connection and retry'
+                        );
+                    }
+                }
+            }
+
+            async loadHkeTariffReference() {
+                try {
+                    const response = await fetch(HKE_TARIFF_FALLBACK, { cache: 'no-store' });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    const residential = data.residential ?? {};
+                    const netRate = Number(residential.netTariff);
+                    const fuel = Number(residential.fuelCharge);
+                    const basic = Number(residential.basicTariff);
+
+                    if (Number.isFinite(fuel) && fuel > 0) {
+                        HK_PROGRESSIVE_TARIFFS.hke.fuelCharge = fuel;
+                    }
+                    if (Number.isFinite(netRate) && netRate > 0) {
+                        HK_PROGRESSIVE_TARIFFS.hke.averageNet = netRate;
+                    }
+                    if (this.elements.hkeRateChip && Number.isFinite(netRate) && netRate > 0) {
+                        this.elements.hkeRateChip.textContent = `港燈 HKE $${netRate.toFixed(3)}`;
+                        this.elements.hkeRateChip.dataset.rate = netRate.toFixed(3);
+                    }
+
+                    this.hkeTariffMeta = {
+                        basicTariff: Number.isFinite(basic) ? basic : null,
+                        effectiveDate: data.effectiveDate || null,
+                        source: data.source || 'HK Electric 2026 Tariff'
+                    };
+
+                    if (this.getSelectedRateProvider() === 'hke') {
+                        this.updateRateStatusDisplay('hke');
+                    }
+                } catch (err) {
+                    console.warn('HKE tariff reference load failed', err);
+                    if (this.getSelectedRateProvider() === 'hke') {
+                        this.updateRateStatusDisplay('hke');
+                    }
                 }
             }
 
@@ -5169,12 +5290,18 @@
                 if (this.elements.costPerKWh) this.elements.costPerKWh.value = item.costPerKWh.toFixed(3);
 
                 this.syncUsageChips(item.usageHours);
+                let matchedProvider = null;
                 this.elements.rateChips?.forEach((chip) => {
                     const chipRate = chip.dataset.provider === 'clp'
                         ? this.liveClpRate
                         : parseFloat(chip.dataset.rate);
-                    chip.classList.toggle('active', Math.abs(chipRate - item.costPerKWh) < 0.0005);
+                    const isActive = Number.isFinite(chipRate) && Math.abs(chipRate - item.costPerKWh) < 0.0005;
+                    chip.classList.toggle('active', isActive);
+                    if (isActive) matchedProvider = chip.dataset.provider;
                 });
+                if (matchedProvider) {
+                    this.updateRateStatusDisplay(matchedProvider);
+                }
 
                 this.updateSaveFormForEdit(item.name);
                 if (this.calculate(false)) {
