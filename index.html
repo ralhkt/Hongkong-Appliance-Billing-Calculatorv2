@@ -105,15 +105,26 @@
             font-size: 1.25rem;
         }
 
+        .header-text {
+            flex: 1;
+            min-width: 0;
+        }
+
         .header-text h1 {
             font-size: 1.25rem;
             font-weight: 600;
             color: hsl(20, 14.3%, 4.1%);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .header-text p {
             font-size: 0.875rem;
             color: var(--ios-gray);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .header-actions {
@@ -121,6 +132,9 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
         }
 
         .back-btn {
@@ -154,12 +168,28 @@
             font-size: 0.8125rem;
             font-weight: 600;
             cursor: pointer;
-            min-height: 36px;
+            min-height: 44px;
+            min-width: 44px;
             position: relative;
+            z-index: 2;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            flex-shrink: 0;
         }
 
         .my-home-btn:active {
             transform: scale(0.97);
+        }
+
+        .my-home-btn.active-nav {
+            background: var(--ios-green);
+            color: white;
+        }
+
+        @media (max-width: 360px) {
+            .my-home-btn-label {
+                display: none;
+            }
         }
 
         .my-home-badge {
@@ -1590,7 +1620,7 @@
                     <div class="header-actions">
                         <button id="myAppliancesBtn" class="my-home-btn" type="button" aria-label="My home appliances">
                             <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                            我的電器
+                            <span class="my-home-btn-label">我的電器</span>
                             <span id="myAppliancesBadge" class="my-home-badge hidden">0</span>
                         </button>
                         <button id="backBtn" class="back-btn" type="button" aria-label="Back to input">
@@ -2572,6 +2602,10 @@
         }
 
         class HomeLibraryStore {
+            constructor() {
+                this.memoryState = null;
+            }
+
             createHome(libraryName, location = '', provider = 'clp') {
                 const now = new Date().toISOString();
                 return {
@@ -2586,16 +2620,45 @@
             }
 
             loadState() {
+                if (this.memoryState?.homes?.length) {
+                    return this.normalizeState(this.memoryState);
+                }
                 try {
                     const raw = localStorage.getItem(HOME_LIBRARY_KEY);
                     if (raw) {
                         const parsed = JSON.parse(raw);
-                        if (parsed?.homes?.length) return parsed;
+                        if (parsed?.homes?.length) {
+                            return this.normalizeState(parsed);
+                        }
                     }
                 } catch {
                     /* fall through to migration */
                 }
-                return this.migrateLegacyState();
+                return this.normalizeState(this.migrateLegacyState());
+            }
+
+            normalizeState(state) {
+                const next = {
+                    activeHomeId: state?.activeHomeId,
+                    homes: Array.isArray(state?.homes) ? state.homes : []
+                };
+                if (!next.homes.length) {
+                    const home = this.createHome('我的電器庫', '');
+                    next.homes = [home];
+                    next.activeHomeId = home.id;
+                }
+                if (!next.homes.some((home) => home.id === next.activeHomeId)) {
+                    next.activeHomeId = next.homes[0].id;
+                }
+                next.homes = next.homes.map((home) => ({
+                    appliances: [],
+                    provider: 'clp',
+                    libraryName: '我的電器庫',
+                    location: '',
+                    ...home,
+                    appliances: Array.isArray(home.appliances) ? home.appliances : []
+                }));
+                return next;
             }
 
             migrateLegacyState() {
@@ -2623,7 +2686,14 @@
             }
 
             persist(state) {
-                localStorage.setItem(HOME_LIBRARY_KEY, JSON.stringify(state));
+                const normalized = this.normalizeState(state);
+                this.memoryState = normalized;
+                try {
+                    localStorage.setItem(HOME_LIBRARY_KEY, JSON.stringify(normalized));
+                } catch {
+                    /* keep in-memory fallback */
+                }
+                return normalized;
             }
 
             getHomes() {
@@ -3082,17 +3152,23 @@
                 this.editingSavedId = null;
                 this.cameraPlugin = null;
                 this.liveClpRate = 1.406;
-                this.householdProvider = this.homeStore.getActiveHome()?.provider || 'clp';
+                this.householdProvider = 'clp';
                 this.currentStep = 1;
-                
+
                 this.initializeElements();
-                this.renderApplianceChips();
-                this.applyApplianceType(this.selectedAppliance, false);
                 this.attachEventListeners();
-                this.configureScanPickers();
-                this.syncActiveHomeUI();
-                this.updateSavedBadge();
-                this.loadClpTariff();
+
+                try {
+                    this.householdProvider = this.homeStore.getActiveHome()?.provider || 'clp';
+                    this.renderApplianceChips();
+                    this.applyApplianceType(this.selectedAppliance, false);
+                    this.configureScanPickers();
+                    this.syncActiveHomeUI();
+                    this.updateSavedBadge();
+                    this.loadClpTariff();
+                } catch (err) {
+                    console.error('Calculator init error', err);
+                }
             }
 
             initializeElements() {
@@ -3249,7 +3325,10 @@
                 const goBack = () => this.showStep(1);
                 this.elements.backBtn?.addEventListener('click', goBack);
                 this.elements.recalculateBtn?.addEventListener('click', goBack);
-                this.elements.myAppliancesBtn?.addEventListener('click', () => this.showStep(3));
+                this.elements.myAppliancesBtn?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.openMyAppliances();
+                });
                 this.elements.addApplianceBtn?.addEventListener('click', () => {
                     this.editingSavedId = null;
                     this.resetSaveForm();
@@ -3733,6 +3812,19 @@
                 };
             }
 
+            openMyAppliances() {
+                this.hideError();
+                try {
+                    this.showStep(3);
+                } catch (err) {
+                    console.error('openMyAppliances error', err);
+                    this.elements.stepInput?.classList.remove('active');
+                    this.elements.stepResults?.classList.remove('active');
+                    this.elements.stepAppliances?.classList.add('active');
+                    this.currentStep = 3;
+                }
+            }
+
             getActiveHome() {
                 return this.homeStore.getActiveHome();
             }
@@ -4093,6 +4185,7 @@
                 this.elements.stepDot1?.classList.toggle('active', isInput);
                 this.elements.stepDot2?.classList.toggle('active', isResults);
                 this.elements.backBtn?.classList.toggle('visible', isResults);
+                this.elements.myAppliancesBtn?.classList.toggle('active-nav', isAppliances);
 
                 if (this.elements.stepLabel) {
                     if (isAppliances) {
@@ -4115,8 +4208,12 @@
                 }
 
                 if (isAppliances) {
-                    this.syncActiveHomeUI();
-                    this.renderSavedAppliances();
+                    try {
+                        this.syncActiveHomeUI();
+                        this.renderSavedAppliances();
+                    } catch (err) {
+                        console.error('Appliances view error', err);
+                    }
                 }
                 if (isResults && !this.editingSavedId) {
                     this.resetSaveForm();
