@@ -49,5 +49,7 @@
 	<string>拍攝能源標籤以自動讀取年耗電量 · Take photos of energy labels to auto-fill electricity data</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>從相簿選擇能源標籤照片 · Select energy label photos from your album</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>儲存拍攝的能源標籤照片到相簿 · Save scanned energy label photos to your album</string>
 </dict>
 </plist>
