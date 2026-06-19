@@ -37,6 +37,10 @@
             --touch-target: 44px;
         }
 
+        html {
+            overflow-x: hidden;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', sans-serif;
             background-color: var(--ios-bg);
@@ -45,6 +49,7 @@
             min-height: 100vh;
             min-height: 100dvh;
             padding-bottom: env(safe-area-inset-bottom);
+            overflow-x: hidden;
             -webkit-text-size-adjust: 100%;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -53,9 +58,10 @@
         }
 
         .container {
-            max-width: 80rem;
+            max-width: 32rem;
+            width: 100%;
             margin: 0 auto;
-            padding: 0 1rem;
+            padding: 0 max(1rem, env(safe-area-inset-left)) 0 max(1rem, env(safe-area-inset-right));
         }
 
         /* Header Styles */
@@ -99,20 +105,79 @@
             color: var(--ios-gray);
         }
 
-        /* Main Content */
-        .main {
-            padding: 1.5rem 0;
+        .header-actions {
+            margin-left: auto;
             display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        /* Horizontal Layout */
-        .horizontal-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            align-items: start;
+        .back-btn {
+            display: none;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-radius: 999px;
+            background: hsl(240, 20%, 94%);
+            color: var(--ios-blue);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 36px;
+        }
+
+        .back-btn.visible {
+            display: flex;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: hsl(20, 5.9%, 85%);
+            transition: all 0.25s ease;
+        }
+
+        .step-dot.active {
+            width: 1.5rem;
+            border-radius: 999px;
+            background: var(--ios-blue);
+        }
+
+        .step-label {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: var(--ios-gray);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main {
+            padding: 1rem 0 1.5rem;
+        }
+
+        .step-view {
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .step-view.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Card Styles */
@@ -120,7 +185,8 @@
             background: white;
             border-radius: var(--radius);
             border: 1px solid hsl(20, 5.9%, 90%);
-            overflow: hidden;
+            overflow: visible;
+            min-width: 0;
         }
 
         .card-header {
@@ -138,6 +204,7 @@
 
         .card-content {
             padding: 1rem;
+            overflow: hidden;
         }
 
         /* Input Styles */
@@ -152,17 +219,19 @@
             font-size: 0.875rem;
             font-weight: 500;
             color: hsl(0, 0%, 30%);
+            word-wrap: break-word;
         }
 
         .input-wrapper {
             position: relative;
+            min-width: 0;
         }
 
         .input {
             width: 100%;
-            padding: 1rem 0.75rem;
-            padding-right: 4rem;
-            font-size: 1.125rem;
+            max-width: 100%;
+            padding: 0.875rem 4.25rem 0.875rem 0.75rem;
+            font-size: 1.0625rem;
             border: 1px solid hsl(20, 5.9%, 90%);
             border-radius: var(--radius);
             background: white;
@@ -186,12 +255,15 @@
 
         .input-unit {
             position: absolute;
-            right: 1rem;
+            right: 0.75rem;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             color: var(--ios-gray);
             pointer-events: none;
+            max-width: 3.5rem;
+            text-align: right;
+            line-height: 1.2;
         }
 
         .input-prefix {
@@ -205,7 +277,8 @@
         }
 
         .input-with-prefix {
-            padding-left: 3rem;
+            padding-left: 2.75rem;
+            padding-right: 3.25rem;
         }
 
         /* Button Styles */
@@ -300,10 +373,16 @@
         .cost-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 0.75rem;
             padding: 0.75rem 0;
             border-bottom: 1px solid hsl(0, 0%, 90%);
             min-height: var(--touch-target);
+        }
+
+        .cost-item > div:first-child {
+            flex: 1;
+            min-width: 0;
         }
 
         .cost-item:last-child {
@@ -330,6 +409,8 @@
             font-size: 1.125rem;
             font-weight: 700;
             text-align: right;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .cost-value.highlight {
@@ -428,6 +509,7 @@
             font-size: 0.75rem;
             color: var(--ios-gray);
             line-height: 1.4;
+            overflow-wrap: anywhere;
         }
 
         .rate-presets {
@@ -477,9 +559,10 @@
         }
 
         .hero-result-value {
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 8vw, 2rem);
             font-weight: 700;
             letter-spacing: -0.02em;
+            word-break: break-word;
         }
 
         .hero-result-sub {
@@ -497,18 +580,21 @@
             letter-spacing: normal;
         }
 
-        .button-secondary {
-            background: hsl(240, 20%, 94%);
+        .button-outline {
+            background: white;
             color: var(--ios-blue);
-            border: 1px solid hsl(207, 100%, 85%);
+            border: 1px solid hsl(207, 100%, 75%);
         }
 
-        .button-secondary:hover {
-            background: hsl(207, 100%, 95%);
+        .button-outline:hover {
+            background: hsl(207, 100%, 97%);
         }
 
-        .button-secondary:active {
-            background: hsl(207, 100%, 90%);
+        .results-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
         }
 
         .rate-status {
@@ -523,6 +609,13 @@
             background: hsl(207, 100%, 96%);
             border: 1px solid hsl(207, 100%, 88%);
             color: hsl(207, 100%, 22%);
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .rate-status > div {
+            min-width: 0;
+            flex: 1;
         }
 
         .rate-status.loading {
@@ -624,13 +717,6 @@
         }
 
         /* Mobile Optimizations */
-        @media (max-width: 1024px) {
-            .horizontal-container {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-        }
-        
         @media (max-width: 768px) {
             .container {
                 padding: 0 0.75rem;
@@ -670,10 +756,6 @@
             
             .main {
                 padding: 1rem 0;
-            }
-            
-            .horizontal-container {
-                gap: 1rem;
             }
             
             .card-header,
@@ -798,8 +880,13 @@
                 border-color: var(--ios-blue);
             }
 
-            .button-secondary {
+            .back-btn {
                 background: hsl(240, 10%, 22%);
+                color: hsl(207, 100%, 70%);
+            }
+
+            .button-outline {
+                background: hsl(240, 10%, 18%);
                 color: hsl(207, 100%, 70%);
                 border-color: hsl(207, 50%, 35%);
             }
@@ -845,7 +932,13 @@
                 </div>
                 <div class="header-text">
                     <h1>香港電費計算器</h1>
-                    <p>Hong Kong Electricity Calculator</p>
+                    <p id="headerSubtitle">Hong Kong Electricity Calculator</p>
+                </div>
+                <div class="header-actions">
+                    <button id="backBtn" class="back-btn" type="button" aria-label="Back to input">
+                        <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                        返回
+                    </button>
                 </div>
             </div>
         </div>
@@ -854,18 +947,22 @@
     <!-- Main Content -->
     <main class="main">
         <div class="container">
-            <!-- Error Message -->
-            <div id="errorAlert" class="alert hidden">
-                <svg class="svg-icon text-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <div>
-                    <div class="alert-title">計算錯誤 Calculation Error</div>
-                    <p id="errorMessage"></p>
-                </div>
+            <div class="step-indicator" aria-hidden="true">
+                <span class="step-dot active" id="stepDot1"></span>
+                <span class="step-dot" id="stepDot2"></span>
+                <span class="step-label" id="stepLabel">步驟 1/2 · 輸入參數</span>
             </div>
 
-            <!-- Horizontal Layout Container -->
-            <div class="horizontal-container">
-                <!-- Input Form (Left Side) -->
+            <!-- Step 1: Input -->
+            <div id="stepInput" class="step-view active">
+                <div id="errorAlert" class="alert hidden">
+                    <svg class="svg-icon text-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <div>
+                        <div class="alert-title">計算錯誤 Calculation Error</div>
+                        <p id="errorMessage"></p>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">
@@ -973,15 +1070,33 @@
                             </div>
                         </div>
 
-                        <!-- View Results Button -->
-                        <button id="calculateBtn" class="button button-secondary">
-                            <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                        <button id="calculateBtn" class="button" type="button">
+                            <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                             <span id="buttonText">查看結果 View Results</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Results Card (Right Side) -->
+                <div class="card info-card">
+                    <div class="card-content">
+                        <div class="info-content">
+                            <svg class="svg-icon info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <div>
+                                <h3 class="info-title">使用說明 Usage Instructions</h3>
+                                <ul class="info-list">
+                                    <li>• 輸入電器全年實際運作小時數</li>
+                                    <li>• 標籤額定小時和用電量取自能源標籤</li>
+                                    <li>• 選擇電價預設或自行輸入每度電費用</li>
+                                    <li>• 完成後點擊「查看結果」進入結果頁</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Results -->
+            <div id="stepResults" class="step-view">
                 <div id="resultsCard" class="card">
                     <div class="card-header">
                         <div class="card-title">
@@ -1044,23 +1159,12 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Info Card -->
-            <div class="card info-card">
-                <div class="card-content">
-                    <div class="info-content">
-                        <svg class="svg-icon info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                        <div>
-                            <h3 class="info-title">使用說明 Usage Instructions</h3>
-                            <ul class="info-list">
-                                <li>• 輸入電器全年實際運作小時數</li>
-                                <li>• 標籤額定小時和用電量取自能源標籤</li>
-                                <li>• 選擇電價預設或自行輸入每度電費用</li>
-                                <li>• 結果即時更新，以港幣顯示年/月/日費用</li>
-                            </ul>
-                        </div>
-                    </div>
+                <div class="results-actions">
+                    <button id="recalculateBtn" class="button button-outline" type="button">
+                        <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                        返回修改 Back to Edit
+                    </button>
                 </div>
             </div>
         </div>
@@ -1230,13 +1334,12 @@
                     costPerKWh: 1.406
                 };
                 this.lastValidResults = null;
-                this.calcDebounceTimer = null;
                 this.clpTariffService = new CLPTariffService();
                 this.liveClpRate = 1.406;
+                this.currentStep = 1;
                 
                 this.initializeElements();
                 this.attachEventListeners();
-                this.calculate(false);
                 this.loadClpTariff();
             }
 
@@ -1247,9 +1350,17 @@
                     kWh: document.getElementById('kWh'),
                     costPerKWh: document.getElementById('costPerKWh'),
                     calculateBtn: document.getElementById('calculateBtn'),
+                    recalculateBtn: document.getElementById('recalculateBtn'),
+                    backBtn: document.getElementById('backBtn'),
                     buttonText: document.getElementById('buttonText'),
                     errorAlert: document.getElementById('errorAlert'),
                     errorMessage: document.getElementById('errorMessage'),
+                    stepInput: document.getElementById('stepInput'),
+                    stepResults: document.getElementById('stepResults'),
+                    stepDot1: document.getElementById('stepDot1'),
+                    stepDot2: document.getElementById('stepDot2'),
+                    stepLabel: document.getElementById('stepLabel'),
+                    headerSubtitle: document.getElementById('headerSubtitle'),
                     resultsCard: document.getElementById('resultsCard'),
                     heroCostValue: document.getElementById('heroCostValue'),
                     multiplierValue: document.getElementById('multiplierValue'),
@@ -1267,21 +1378,15 @@
             }
 
             attachEventListeners() {
-                Object.keys(this.inputs).forEach(key => {
-                    if (this.elements[key]) {
-                        this.elements[key].addEventListener('input', () => {
-                            clearTimeout(this.calcDebounceTimer);
-                            this.calcDebounceTimer = setTimeout(() => this.calculate(false), 150);
-                        });
-                    }
-                });
-
                 if (this.elements.calculateBtn) {
                     this.elements.calculateBtn.addEventListener('click', () => {
-                        this.calculate(true);
-                        this.elements.resultsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        this.goToResults();
                     });
                 }
+
+                const goBack = () => this.showStep(1);
+                this.elements.backBtn?.addEventListener('click', goBack);
+                this.elements.recalculateBtn?.addEventListener('click', goBack);
 
                 this.elements.rateChips?.forEach((chip) => {
                     chip.addEventListener('click', () => {
@@ -1293,7 +1398,6 @@
                         }
                         this.elements.rateChips.forEach((c) => c.classList.remove('active'));
                         chip.classList.add('active');
-                        this.calculate(false);
                     });
                 });
 
@@ -1348,7 +1452,6 @@
                 const clpActive = this.elements.clpRateChip?.classList.contains('active');
                 if (clpActive && this.elements.costPerKWh) {
                     this.elements.costPerKWh.value = netRate.toFixed(3);
-                    this.calculate(false);
                 }
 
                 const basic = residential.basicTariff;
@@ -1364,7 +1467,7 @@
 
                 this.setRateStatus(
                     '',
-                    `已連接 CLP 官方 API · 最新淨電價 HK$${netRate.toFixed(3)}/kWh${effective} (${checkedAt})`,
+                    `CLP 即時電價 HK$${netRate.toFixed(3)}/kWh${effective}`,
                     breakdown
                 );
             }
@@ -1425,11 +1528,40 @@
                 return `HK$ ${amount.toFixed(2)}`;
             }
 
+            showStep(step) {
+                this.currentStep = step;
+                const isInput = step === 1;
+
+                this.elements.stepInput?.classList.toggle('active', isInput);
+                this.elements.stepResults?.classList.toggle('active', !isInput);
+                this.elements.stepDot1?.classList.toggle('active', isInput);
+                this.elements.stepDot2?.classList.toggle('active', !isInput);
+                this.elements.backBtn?.classList.toggle('visible', !isInput);
+
+                if (this.elements.stepLabel) {
+                    this.elements.stepLabel.textContent = isInput
+                        ? '步驟 1/2 · 輸入參數'
+                        : '步驟 2/2 · 計算結果';
+                }
+                if (this.elements.headerSubtitle) {
+                    this.elements.headerSubtitle.textContent = isInput
+                        ? 'Hong Kong Electricity Calculator'
+                        : 'Your Bill Estimate';
+                }
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            goToResults() {
+                if (!this.calculate(true)) return;
+                this.showStep(2);
+            }
+
             showError(message) {
-                if (this.elements.errorMessage && this.elements.errorAlert && this.elements.resultsCard) {
+                this.showStep(1);
+                if (this.elements.errorMessage && this.elements.errorAlert) {
                     this.elements.errorMessage.textContent = message;
                     this.elements.errorAlert.classList.remove('hidden');
-                    this.elements.resultsCard.classList.add('hidden');
                 }
             }
 
@@ -1441,11 +1573,6 @@
 
             showResults(results) {
                 this.hideError();
-                
-                // Show results card - Critical fix for calculation display bug
-                if (this.elements.resultsCard) {
-                    this.elements.resultsCard.classList.remove('hidden');
-                }
                 
                 // Update all result values with null checks
                 if (this.elements.heroCostValue) {
@@ -1475,11 +1602,7 @@
                 try {
                     const inputs = this.readInputsFromDOM();
                     if (!this.validateInputs(inputs, showErrors)) {
-                        this.hideError();
-                        if (this.lastValidResults) {
-                            this.showResults(this.lastValidResults);
-                        }
-                        return;
+                        return false;
                     }
 
                     this.inputs = inputs;
@@ -1487,7 +1610,7 @@
                     if (this.elements.buttonText && showErrors) {
                         this.elements.buttonText.textContent = '計算中...';
                     }
-                    if (this.elements.calculateBtn) {
+                    if (this.elements.calculateBtn && showErrors) {
                         this.elements.calculateBtn.disabled = true;
                     }
 
@@ -1506,10 +1629,12 @@
 
                     this.lastValidResults = results;
                     this.showResults(results);
+                    return true;
                 } catch (err) {
                     if (showErrors) {
                         this.showError(err.message);
                     }
+                    return false;
                 } finally {
                     if (this.elements.buttonText) {
                         this.elements.buttonText.textContent = '查看結果 View Results';
