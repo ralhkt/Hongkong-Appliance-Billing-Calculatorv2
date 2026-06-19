@@ -310,6 +310,78 @@
             opacity: 0.85;
         }
 
+        .home-settings-card {
+            background: white;
+            border: 1px solid hsl(20, 5.9%, 90%);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .home-switcher {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.25rem;
+            margin-bottom: 0.875rem;
+        }
+
+        .home-chip {
+            flex: 0 0 auto;
+            max-width: 11rem;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid hsl(20, 5.9%, 90%);
+            border-radius: var(--radius);
+            background: hsl(20, 5.9%, 96%);
+            text-align: left;
+            cursor: pointer;
+            min-height: var(--touch-target);
+        }
+
+        .home-chip.active {
+            border-color: var(--ios-green);
+            background: hsl(142, 71%, 96%);
+            box-shadow: 0 0 0 1px var(--ios-green);
+        }
+
+        .home-chip-name {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .home-chip-meta {
+            display: block;
+            font-size: 0.6875rem;
+            color: var(--ios-gray);
+            margin-top: 0.125rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .home-settings-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+
+        .home-settings-actions .button,
+        .home-settings-actions .button-outline {
+            flex: 1;
+            min-width: 8rem;
+        }
+
+        .home-delete-btn {
+            color: var(--ios-red);
+            border-color: hsl(0, 70%, 85%);
+        }
+
         .household-tariff-row {
             margin-bottom: 0.875rem;
         }
@@ -1419,6 +1491,22 @@
                 color: hsl(207, 60%, 80%);
             }
 
+            .home-settings-card {
+                background: hsl(240, 10%, 18%);
+                border-color: hsl(240, 10%, 28%);
+            }
+
+            .home-chip {
+                background: hsl(240, 10%, 22%);
+                border-color: hsl(240, 10%, 32%);
+                color: hsl(0, 0%, 90%);
+            }
+
+            .home-chip.active {
+                background: hsl(142, 30%, 18%);
+                border-color: hsl(142, 50%, 40%);
+            }
+
             .saved-item-stat strong {
                 color: hsl(0, 0%, 90%);
             }
@@ -1832,10 +1920,27 @@
                     <div class="card-header">
                         <div class="card-title">
                             <svg class="svg-icon text-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                            我的電器庫 My Home Appliances
+                            <span id="appliancesCardTitle">我的電器庫 My Home Appliances</span>
                         </div>
                     </div>
                     <div class="card-content">
+                        <div class="home-settings-card">
+                            <div class="label">住宿地點 · 電器庫 Accommodation &amp; Library</div>
+                            <div id="homeSwitcher" class="home-switcher" role="tablist" aria-label="Accommodation locations"></div>
+                            <div class="input-group">
+                                <label for="homeLibraryName" class="label">電器庫名稱 Library Name</label>
+                                <input id="homeLibraryName" class="input" type="text" placeholder="例如：我的家、租屋、父母家" maxlength="30" enterkeyhint="done" />
+                            </div>
+                            <div class="input-group">
+                                <label for="homeLocation" class="label">地點 Location</label>
+                                <input id="homeLocation" class="input" type="text" placeholder="例如：九龍塘劍橋花園 A 座 12 樓" maxlength="80" enterkeyhint="done" />
+                            </div>
+                            <div class="home-settings-actions">
+                                <button id="saveHomeSettingsBtn" class="button" type="button" style="background: var(--ios-green);">儲存設定 Save</button>
+                                <button id="addHomeBtn" class="button button-outline" type="button">新增地點 Add Place</button>
+                                <button id="deleteHomeBtn" class="button button-outline home-delete-btn hidden" type="button">刪除此地點 Delete</button>
+                            </div>
+                        </div>
                         <div class="household-tariff-row">
                             <div class="label">電力公司 · 累進制電價 Provider &amp; Block Tariff</div>
                             <div class="rate-presets" role="group" aria-label="Household electricity provider">
@@ -2386,6 +2491,7 @@
         ];
 
         const SAVED_APPLIANCES_KEY = 'hk_saved_appliances_v1';
+        const HOME_LIBRARY_KEY = 'hk_home_library_v1';
         const HOUSEHOLD_PROVIDER_KEY = 'hk_household_provider_v1';
 
         const HK_PROGRESSIVE_TARIFFS = {
@@ -2465,51 +2571,159 @@
             }
         }
 
-        class SavedApplianceStore {
-            load() {
+        class HomeLibraryStore {
+            createHome(libraryName, location = '', provider = 'clp') {
+                const now = new Date().toISOString();
+                return {
+                    id: `home_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                    libraryName: libraryName.trim() || '我的電器庫',
+                    location: location.trim(),
+                    provider: HK_PROGRESSIVE_TARIFFS[provider] ? provider : 'clp',
+                    appliances: [],
+                    createdAt: now,
+                    updatedAt: now
+                };
+            }
+
+            loadState() {
                 try {
-                    const raw = localStorage.getItem(SAVED_APPLIANCES_KEY);
-                    const parsed = raw ? JSON.parse(raw) : [];
-                    return Array.isArray(parsed) ? parsed : [];
+                    const raw = localStorage.getItem(HOME_LIBRARY_KEY);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed?.homes?.length) return parsed;
+                    }
                 } catch {
-                    return [];
+                    /* fall through to migration */
                 }
+                return this.migrateLegacyState();
             }
 
-            persist(items) {
-                localStorage.setItem(SAVED_APPLIANCES_KEY, JSON.stringify(items));
+            migrateLegacyState() {
+                let appliances = [];
+                let provider = 'clp';
+                try {
+                    const legacy = localStorage.getItem(SAVED_APPLIANCES_KEY);
+                    if (legacy) {
+                        const parsed = JSON.parse(legacy);
+                        appliances = Array.isArray(parsed) ? parsed : [];
+                    }
+                    const legacyProvider = localStorage.getItem(HOUSEHOLD_PROVIDER_KEY);
+                    if (legacyProvider && HK_PROGRESSIVE_TARIFFS[legacyProvider]) {
+                        provider = legacyProvider;
+                    }
+                } catch {
+                    appliances = [];
+                }
+
+                const home = this.createHome('我的電器庫', '', provider);
+                home.appliances = appliances;
+                const state = { activeHomeId: home.id, homes: [home] };
+                this.persist(state);
+                return state;
             }
 
-            add(item) {
-                const items = this.load();
-                items.unshift(item);
-                this.persist(items);
-                return items;
+            persist(state) {
+                localStorage.setItem(HOME_LIBRARY_KEY, JSON.stringify(state));
             }
 
-            update(id, patch) {
-                const items = this.load();
-                const index = items.findIndex((item) => item.id === id);
-                if (index === -1) return items;
-                items[index] = { ...items[index], ...patch, updatedAt: new Date().toISOString() };
-                this.persist(items);
-                return items;
+            getHomes() {
+                return this.loadState().homes;
             }
 
-            remove(id) {
-                const items = this.load().filter((item) => item.id !== id);
-                this.persist(items);
-                return items;
+            getActiveHomeId() {
+                return this.loadState().activeHomeId;
             }
 
-            getTotals(items) {
-                return items.reduce((acc, item) => {
-                    acc.count += 1;
-                    acc.annualCost += item.annualCost || 0;
-                    acc.annualKwh += item.annualKwh || 0;
-                    acc.monthlyCost += item.monthlyCost || 0;
-                    return acc;
-                }, { count: 0, annualCost: 0, annualKwh: 0, monthlyCost: 0 });
+            getActiveHome() {
+                const state = this.loadState();
+                return state.homes.find((home) => home.id === state.activeHomeId) || state.homes[0];
+            }
+
+            setActiveHome(id) {
+                const state = this.loadState();
+                if (!state.homes.some((home) => home.id === id)) return state;
+                state.activeHomeId = id;
+                this.persist(state);
+                return state;
+            }
+
+            addHome(libraryName, location = '', provider = 'clp') {
+                const state = this.loadState();
+                const home = this.createHome(libraryName, location, provider);
+                state.homes.unshift(home);
+                state.activeHomeId = home.id;
+                this.persist(state);
+                return home;
+            }
+
+            updateHome(id, patch) {
+                const state = this.loadState();
+                const index = state.homes.findIndex((home) => home.id === id);
+                if (index === -1) return null;
+                state.homes[index] = {
+                    ...state.homes[index],
+                    ...patch,
+                    updatedAt: new Date().toISOString()
+                };
+                this.persist(state);
+                return state.homes[index];
+            }
+
+            removeHome(id) {
+                const state = this.loadState();
+                if (state.homes.length <= 1) return false;
+                state.homes = state.homes.filter((home) => home.id !== id);
+                if (state.activeHomeId === id) {
+                    state.activeHomeId = state.homes[0].id;
+                }
+                this.persist(state);
+                return true;
+            }
+
+            loadAppliances(homeId = null) {
+                const home = homeId
+                    ? this.getHomes().find((entry) => entry.id === homeId)
+                    : this.getActiveHome();
+                return home?.appliances || [];
+            }
+
+            add(item, homeId = null) {
+                const state = this.loadState();
+                const targetId = homeId || state.activeHomeId;
+                const home = state.homes.find((entry) => entry.id === targetId);
+                if (!home) return [];
+                home.appliances.unshift(item);
+                home.updatedAt = new Date().toISOString();
+                this.persist(state);
+                return home.appliances;
+            }
+
+            update(id, patch, homeId = null) {
+                const state = this.loadState();
+                const targetId = homeId || state.activeHomeId;
+                const home = state.homes.find((entry) => entry.id === targetId);
+                if (!home) return [];
+                const index = home.appliances.findIndex((item) => item.id === id);
+                if (index === -1) return home.appliances;
+                home.appliances[index] = {
+                    ...home.appliances[index],
+                    ...patch,
+                    updatedAt: new Date().toISOString()
+                };
+                home.updatedAt = new Date().toISOString();
+                this.persist(state);
+                return home.appliances;
+            }
+
+            remove(id, homeId = null) {
+                const state = this.loadState();
+                const targetId = homeId || state.activeHomeId;
+                const home = state.homes.find((entry) => entry.id === targetId);
+                if (!home) return [];
+                home.appliances = home.appliances.filter((item) => item.id !== id);
+                home.updatedAt = new Date().toISOString();
+                this.persist(state);
+                return home.appliances;
             }
         }
 
@@ -2862,13 +3076,13 @@
                 this.lastValidResults = null;
                 this.clpTariffService = new CLPTariffService();
                 this.labelOCRService = new LabelOCRService();
-                this.savedStore = new SavedApplianceStore();
+                this.homeStore = new HomeLibraryStore();
                 this.pendingScan = null;
                 this.isScanning = false;
                 this.editingSavedId = null;
                 this.cameraPlugin = null;
                 this.liveClpRate = 1.406;
-                this.householdProvider = localStorage.getItem(HOUSEHOLD_PROVIDER_KEY) || 'clp';
+                this.householdProvider = this.homeStore.getActiveHome()?.provider || 'clp';
                 this.currentStep = 1;
                 
                 this.initializeElements();
@@ -2876,6 +3090,7 @@
                 this.applyApplianceType(this.selectedAppliance, false);
                 this.attachEventListeners();
                 this.configureScanPickers();
+                this.syncActiveHomeUI();
                 this.updateSavedBadge();
                 this.loadClpTariff();
             }
@@ -2904,6 +3119,13 @@
                     saveApplianceBtn: document.getElementById('saveApplianceBtn'),
                     saveApplianceBtnText: document.getElementById('saveApplianceBtnText'),
                     saveApplianceTitle: document.getElementById('saveApplianceTitle'),
+                    appliancesCardTitle: document.getElementById('appliancesCardTitle'),
+                    homeSwitcher: document.getElementById('homeSwitcher'),
+                    homeLibraryName: document.getElementById('homeLibraryName'),
+                    homeLocation: document.getElementById('homeLocation'),
+                    saveHomeSettingsBtn: document.getElementById('saveHomeSettingsBtn'),
+                    addHomeBtn: document.getElementById('addHomeBtn'),
+                    deleteHomeBtn: document.getElementById('deleteHomeBtn'),
                     savedAppliancesList: document.getElementById('savedAppliancesList'),
                     savedAppliancesEmpty: document.getElementById('savedAppliancesEmpty'),
                     householdClpChip: document.getElementById('householdClpChip'),
@@ -3036,6 +3258,14 @@
                 this.elements.backFromAppliancesBtn?.addEventListener('click', () => this.showStep(1));
                 document.querySelectorAll('[data-household-provider]').forEach((chip) => {
                     chip.addEventListener('click', () => this.setHouseholdProvider(chip.dataset.householdProvider));
+                });
+                this.elements.saveHomeSettingsBtn?.addEventListener('click', () => this.saveHomeSettings());
+                this.elements.addHomeBtn?.addEventListener('click', () => this.addNewHome());
+                this.elements.deleteHomeBtn?.addEventListener('click', () => this.deleteCurrentHome());
+                [this.elements.homeLibraryName, this.elements.homeLocation].forEach((input) => {
+                    input?.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') this.saveHomeSettings();
+                    });
                 });
                 this.updateHouseholdProviderChips();
                 this.elements.saveApplianceBtn?.addEventListener('click', () => this.saveCurrentAppliance());
@@ -3454,9 +3684,7 @@
                 if (this.elements.saveApplianceName) {
                     this.elements.saveApplianceName.value = this.getDefaultSaveName();
                 }
-                if (this.elements.saveApplianceTitle) {
-                    this.elements.saveApplianceTitle.textContent = '儲存到我的電器 Save to My Home';
-                }
+                this.updateSaveDestinationLabel();
                 if (this.elements.saveApplianceBtnText) {
                     this.elements.saveApplianceBtnText.textContent = '儲存 Save';
                 }
@@ -3498,18 +3726,171 @@
                 };
             }
 
+            getActiveHome() {
+                return this.homeStore.getActiveHome();
+            }
+
+            getActiveLibraryName() {
+                return this.getActiveHome()?.libraryName || '我的電器庫';
+            }
+
             updateSavedBadge() {
-                const count = this.savedStore.load().length;
+                const count = this.homeStore.loadAppliances().length;
                 if (this.elements.myAppliancesBadge) {
                     this.elements.myAppliancesBadge.textContent = String(count);
                     this.elements.myAppliancesBadge.classList.toggle('hidden', count === 0);
                 }
             }
 
+            renderHomeSwitcher() {
+                const container = this.elements.homeSwitcher;
+                if (!container) return;
+                const homes = this.homeStore.getHomes();
+                const activeId = this.homeStore.getActiveHomeId();
+                container.innerHTML = '';
+
+                homes.forEach((home) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = `home-chip${home.id === activeId ? ' active' : ''}`;
+                    btn.setAttribute('role', 'tab');
+                    btn.setAttribute('aria-selected', home.id === activeId ? 'true' : 'false');
+                    btn.innerHTML = `
+                        <span class="home-chip-name"></span>
+                        <span class="home-chip-meta"></span>
+                    `;
+                    btn.querySelector('.home-chip-name').textContent = home.libraryName;
+                    const location = home.location || '未設定地點';
+                    const count = home.appliances?.length || 0;
+                    btn.querySelector('.home-chip-meta').textContent = `${location} · ${count} 件`;
+                    btn.addEventListener('click', () => this.switchHome(home.id));
+                    container.appendChild(btn);
+                });
+            }
+
+            fillHomeSettingsForm(home = this.getActiveHome()) {
+                if (!home) return;
+                if (this.elements.homeLibraryName) {
+                    this.elements.homeLibraryName.value = home.libraryName || '';
+                }
+                if (this.elements.homeLocation) {
+                    this.elements.homeLocation.value = home.location || '';
+                }
+                if (this.elements.deleteHomeBtn) {
+                    this.elements.deleteHomeBtn.classList.toggle('hidden', this.homeStore.getHomes().length <= 1);
+                }
+            }
+
+            updateHomeTitles() {
+                const home = this.getActiveHome();
+                const libraryName = home?.libraryName || '我的電器庫';
+                const location = home?.location?.trim();
+                const title = location ? `${libraryName} · ${location}` : libraryName;
+
+                if (this.elements.appliancesCardTitle) {
+                    this.elements.appliancesCardTitle.textContent = title;
+                }
+                if (this.currentStep === 3 && this.elements.stepLabel) {
+                    this.elements.stepLabel.textContent = `${libraryName} · My Appliances`;
+                }
+                if (this.currentStep === 3 && this.elements.headerSubtitle) {
+                    this.elements.headerSubtitle.textContent = location || 'Home Electricity Inventory';
+                }
+                this.updateSaveDestinationLabel();
+            }
+
+            updateSaveDestinationLabel() {
+                const libraryName = this.getActiveLibraryName();
+                if (this.elements.saveApplianceTitle && !this.editingSavedId) {
+                    this.elements.saveApplianceTitle.textContent = `儲存到「${libraryName}」 Save to Library`;
+                }
+            }
+
+            syncActiveHomeUI() {
+                const home = this.getActiveHome();
+                this.householdProvider = home?.provider || 'clp';
+                this.renderHomeSwitcher();
+                this.fillHomeSettingsForm(home);
+                this.updateHouseholdProviderChips();
+                this.updateHomeTitles();
+            }
+
+            switchHome(homeId) {
+                if (homeId === this.homeStore.getActiveHomeId()) return;
+                this.homeStore.setActiveHome(homeId);
+                this.editingSavedId = null;
+                this.resetSaveForm();
+                this.syncActiveHomeUI();
+                this.renderSavedAppliances();
+                this.updateSavedBadge();
+            }
+
+            saveHomeSettings() {
+                const home = this.getActiveHome();
+                if (!home) return;
+
+                const libraryName = this.elements.homeLibraryName?.value?.trim();
+                const location = this.elements.homeLocation?.value?.trim() || '';
+                if (!libraryName) {
+                    this.showError('請輸入電器庫名稱 Please enter a library name');
+                    return;
+                }
+
+                this.homeStore.updateHome(home.id, { libraryName, location });
+                this.hideError();
+                this.syncActiveHomeUI();
+                this.renderSavedAppliances();
+
+                if (this.elements.saveHomeSettingsBtn) {
+                    const original = this.elements.saveHomeSettingsBtn.textContent;
+                    this.elements.saveHomeSettingsBtn.textContent = '已儲存 ✓ Saved';
+                    setTimeout(() => {
+                        if (this.elements.saveHomeSettingsBtn) {
+                            this.elements.saveHomeSettingsBtn.textContent = original;
+                        }
+                    }, 1500);
+                }
+            }
+
+            addNewHome() {
+                const homes = this.homeStore.getHomes();
+                const home = this.homeStore.addHome(`住所 ${homes.length + 1}`, '');
+                this.editingSavedId = null;
+                this.resetSaveForm();
+                this.syncActiveHomeUI();
+                this.renderSavedAppliances();
+                this.updateSavedBadge();
+                this.elements.homeLibraryName?.focus();
+                if (home) {
+                    this.elements.homeLibraryName?.select();
+                }
+            }
+
+            deleteCurrentHome() {
+                const home = this.getActiveHome();
+                if (!home || this.homeStore.getHomes().length <= 1) return;
+
+                const ok = confirm(`刪除「${home.libraryName}」及其中所有電器？\nDelete "${home.libraryName}" and all appliances?`);
+                if (!ok) return;
+
+                if (this.editingSavedId && home.appliances.some((item) => item.id === this.editingSavedId)) {
+                    this.editingSavedId = null;
+                    this.resetSaveForm();
+                }
+
+                this.homeStore.removeHome(home.id);
+                this.syncActiveHomeUI();
+                this.renderSavedAppliances();
+                this.updateSavedBadge();
+            }
+
             setHouseholdProvider(provider) {
                 if (!HK_PROGRESSIVE_TARIFFS[provider]) return;
                 this.householdProvider = provider;
-                localStorage.setItem(HOUSEHOLD_PROVIDER_KEY, provider);
+                const home = this.getActiveHome();
+                if (home) {
+                    this.homeStore.updateHome(home.id, { provider });
+                }
                 this.updateHouseholdProviderChips();
                 this.renderSavedAppliances();
             }
@@ -3543,7 +3924,7 @@
             }
 
             renderSavedAppliances() {
-                const items = this.savedStore.load();
+                const items = this.homeStore.loadAppliances();
                 const totals = ProgressiveTariffCalculator.getHouseholdTotals(items, this.householdProvider);
                 const listEl = this.elements.savedAppliancesList;
                 const emptyEl = this.elements.savedAppliancesEmpty;
@@ -3567,6 +3948,11 @@
 
                 if (!items.length) {
                     emptyEl?.classList.remove('hidden');
+                    if (emptyEl) {
+                        const libraryName = this.getActiveLibraryName();
+                        emptyEl.innerHTML = `「${libraryName}」尚未儲存任何電器。<br>完成計算後，在結果頁點擊「儲存」加入此住所的電器庫。<br><br>No appliances saved for this place yet. Calculate and tap Save on the results page.`;
+                    }
+                    this.renderHomeSwitcher();
                     return;
                 }
                 emptyEl?.classList.add('hidden');
@@ -3605,6 +3991,7 @@
                     card.querySelector('.delete')?.addEventListener('click', () => this.deleteSavedAppliance(item.id));
                     listEl.appendChild(card);
                 });
+                this.renderHomeSwitcher();
             }
 
             saveCurrentAppliance() {
@@ -3620,12 +4007,12 @@
 
                 const record = this.buildSavedRecord(name);
                 if (this.editingSavedId) {
-                    const existing = this.savedStore.load().find((item) => item.id === this.editingSavedId);
+                    const existing = this.homeStore.loadAppliances().find((item) => item.id === this.editingSavedId);
                     record.id = this.editingSavedId;
                     record.savedAt = existing?.savedAt || record.savedAt;
-                    this.savedStore.update(this.editingSavedId, record);
+                    this.homeStore.update(this.editingSavedId, record);
                 } else {
-                    this.savedStore.add(record);
+                    this.homeStore.add(record);
                 }
 
                 this.editingSavedId = record.id;
@@ -3645,7 +4032,7 @@
             }
 
             loadSavedAppliance(id) {
-                const item = this.savedStore.load().find((entry) => entry.id === id);
+                const item = this.homeStore.loadAppliances().find((entry) => entry.id === id);
                 if (!item) return;
 
                 this.editingSavedId = id;
@@ -3673,12 +4060,12 @@
             }
 
             deleteSavedAppliance(id) {
-                const item = this.savedStore.load().find((entry) => entry.id === id);
+                const item = this.homeStore.loadAppliances().find((entry) => entry.id === id);
                 if (!item) return;
                 const ok = confirm(`刪除「${item.name}」？\nDelete "${item.name}"?`);
                 if (!ok) return;
 
-                this.savedStore.remove(id);
+                this.homeStore.remove(id);
                 if (this.editingSavedId === id) {
                     this.editingSavedId = null;
                     this.resetSaveForm();
@@ -3702,7 +4089,7 @@
 
                 if (this.elements.stepLabel) {
                     if (isAppliances) {
-                        this.elements.stepLabel.textContent = '我的電器庫 · My Appliances';
+                        this.elements.stepLabel.textContent = `${this.getActiveLibraryName()} · My Appliances`;
                     } else {
                         this.elements.stepLabel.textContent = isInput
                             ? '步驟 1/2 · 輸入參數'
@@ -3711,7 +4098,8 @@
                 }
                 if (this.elements.headerSubtitle) {
                     if (isAppliances) {
-                        this.elements.headerSubtitle.textContent = 'Home Electricity Inventory';
+                        const location = this.getActiveHome()?.location?.trim();
+                        this.elements.headerSubtitle.textContent = location || 'Home Electricity Inventory';
                     } else {
                         this.elements.headerSubtitle.textContent = isInput
                             ? 'Hong Kong Electricity Calculator'
@@ -3720,6 +4108,7 @@
                 }
 
                 if (isAppliances) {
+                    this.syncActiveHomeUI();
                     this.renderSavedAppliances();
                 }
                 if (isResults && !this.editingSavedId) {
