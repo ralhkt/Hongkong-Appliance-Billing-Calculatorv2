@@ -605,25 +605,6 @@
         }
 
         .scan-file-input {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 2;
-            font-size: 0;
-        }
-
-        .scan-picker-wrap.native-picker .scan-btn {
-            pointer-events: auto;
-        }
-
-        .scan-picker-wrap.web-picker .scan-btn {
-            pointer-events: none;
-        }
-
-        .scan-picker-wrap.native-picker .scan-file-input {
             display: none;
         }
 
@@ -1963,16 +1944,16 @@
                         拍攝能源標籤 Scan Energy Label
                     </div>
                     <p class="scan-desc">拍攝香港強制性能源效益標籤，自動讀取年耗電量並計算電費 · Photograph the HK MEELS label to auto-fill kWh and show results</p>
-                    <div class="scan-actions">
-                        <div class="scan-picker-wrap web-picker" id="scanCameraWrap">
-                            <button type="button" class="scan-btn scan-btn-primary" id="scanCameraBtn">
+                    <div class="scan-actions" id="scanActions">
+                        <div class="scan-picker-wrap" id="scanCameraWrap">
+                            <button type="button" class="scan-btn scan-btn-primary" id="scanCameraBtn" data-scan-source="camera">
                                 <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                 拍照 Take Photo
                             </button>
                             <input type="file" id="scanCameraInput" class="scan-file-input" accept="image/*" capture="environment" aria-label="Take photo of energy label" />
                         </div>
-                        <div class="scan-picker-wrap web-picker" id="scanAlbumWrap">
-                            <button type="button" class="scan-btn" id="scanAlbumBtn">
+                        <div class="scan-picker-wrap" id="scanAlbumWrap">
+                            <button type="button" class="scan-btn" id="scanAlbumBtn" data-scan-source="album">
                                 <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                                 相簿 Album
                             </button>
@@ -2362,6 +2343,7 @@
     </div>
     </div>
 
+    <script src="capacitor.js"></script>
     <script>
         const APP_ICON_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAECUlEQVR42u3cQW4bQQxEUZ87l3f2QZBYPSSL03gC/i6xAdX3oNVF8evr1/c3cA3eBBAaIDRAaIDQIDRAaIDQAKEBQgOEBggNQgOEBggNEBogNAgNEBogNEBogNAgNEBogNAAoQFCg9AAoQFCA4QGCA1CA4QGCA0QGoT2JvyFf71++u/+938//b2f/BxC42OpT19kJvRKqZ+8nvweuRA6IvVPjy6VT3lCexNapE485UHoFqmnji4yIXRE5oqjBaEJHTludP4sQhM68oGw80lPaEJHrus675kJTejI/XN3oygnQpcKnW4U5UToMqE3NIpyInT5cFKyUZQToR8LvalRlBOhW5/Q042inAjddoZONIpyInTLLUeqUZQToT8WOjUCSmhClwudGgF15CD0Nd9e8aGQ0K8ZVqpuFOVB6Pg4qQF/Ql837F/VKMqC0McfCrtGQJ+cs+VE6KNru41LZQhN6ONjhaUyhHZFZ6kMod++h8NSGUJfdzVnqQyhLZU5/MORE6Fbp+2mG0U5EXpM6IlGUU6EXrn6q/pLBoRG+dXaRPkiJ0K3XttNN4pyIvSx0OmlMoQmdGn1nV4qQ2hClw8nJZfKEJrQLeOjqXM2oQnd+oTe0CjKidAlZ+jEXTWRCd1yy5FaKkNmQpffQyeXypCZ0Ot2cJCZ0JbKkJrQNy6VITWhr1oqQ2pCX7VUhtSEXjET3dkoyojQI+OjU42inAg98oFwqlGUE6Hbr+0mG0U5EbpE6NRSGUITulzo1LWcIweh22Y5tjSKciJ02bTdhkZRToRuETrVKMqJ0OVHjmSjKCdCl34o3NQogtAlG4s2NYogdNtddKpRJLQ3IT7o73uFhH5NDZ5oFAmN9UtlSE3oVfPRhCb0dcP+1Y2iXAg9/r3CzkZRNoSODvpXN4ryIfTYdd1EoygnQo/eP3c3inIidKnQ6UZRToQuE3pDoygnQpcPJyUbRTkRumV8NNUoyonQrU/o6UZRToRuO0MnGkU5EbrlliPVKMqJ0B8LvWWpDKEJ/VjoTUtlCE3oV357xYdCQr9mWKm6UZQHoePjpAb8CX3dsH9VoygLQh9/KNy0VIbQhH50bbdxqQyhCX18rLBUhtCu6CyVIfTb93BYKkPo667mLJUhtKUyh384ciJ067TddKMoJ0KPCT3RKMqJ0CtXf1V/yYDQKL9amyhf5ETo1mu76UZRToQ+Fjq9VIbQhC6tvtNLZQhN6PLhpORSGUITumV8NHXOJjShW5/QGxpFOREahAYIDRAaIDRAaBAaIDRAaIDQAKFBaIDQAKEBQoPQ3gQQGiA0QGiA0CA0QGiA0AChAUKD0AChAUIDhAYIDUIDhAYIDRAaIDQIDRAaIDRAaOAPfgOmEYNP3NjxEQAAAABJRU5ErkJggg=";
 
@@ -3662,10 +3644,7 @@
                     this.renderAppliancePicker();
                     this.applyApplianceType(this.selectedAppliance, false);
                     this.syncActiveHomeUI();
-                    this.configureScanPickers();
-                    if (this.isNativeApp()) {
-                        requestAnimationFrame(() => this.configureScanPickers());
-                    }
+                    this.bindScanControls();
                     this.setHomeSettingsEditMode(false);
                     this.updateSavedBadge();
                     this.loadClpTariff();
@@ -3968,6 +3947,8 @@
             }
 
             attachEventListeners() {
+                this.bindScanControls();
+
                 if (this.elements.calculateBtn) {
                     this.elements.calculateBtn.addEventListener('click', () => {
                         this.goToResults();
@@ -4079,50 +4060,52 @@
                     }
                 });
 
+            }
+
+            bindScanControls() {
                 const warmupOCR = () => this.labelOCRService.warmup();
                 document.getElementById('scanCard')?.addEventListener('touchstart', warmupOCR, { passive: true, once: true });
                 document.getElementById('scanCard')?.addEventListener('mouseenter', warmupOCR, { once: true });
 
-                const bindScanTrigger = (btn, source, input) => {
-                    if (!btn) return;
-                    const handler = (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        warmupOCR();
-                        if (this.isNativeApp()) {
-                            this.pickScanImage(source);
-                        } else {
-                            input?.click();
-                        }
-                    };
-                    btn.addEventListener('click', handler);
-                    btn.addEventListener('touchend', handler, { passive: false });
+                const onScanTap = (source, e) => {
+                    e?.preventDefault?.();
+                    e?.stopPropagation?.();
+                    warmupOCR();
+                    void this.pickScanImage(source);
                 };
 
-                bindScanTrigger(
-                    this.elements.scanCameraBtn,
-                    'camera',
-                    this.elements.scanCameraInput
-                );
-                bindScanTrigger(
-                    this.elements.scanAlbumBtn,
-                    'album',
-                    this.elements.scanAlbumInput
-                );
+                const scanActions = document.getElementById('scanActions');
+                if (scanActions && !scanActions.dataset.bound) {
+                    scanActions.dataset.bound = '1';
+                    scanActions.addEventListener('click', (e) => {
+                        const btn = e.target.closest('[data-scan-source]');
+                        if (!btn || btn.disabled) return;
+                        onScanTap(btn.dataset.scanSource, e);
+                    });
+                }
 
-                this.elements.scanCameraInput?.addEventListener('change', (e) => {
-                    warmupOCR();
-                    this.handleScanFile(e.target.files?.[0]);
-                    e.target.value = '';
-                });
-                this.elements.scanAlbumInput?.addEventListener('change', (e) => {
-                    warmupOCR();
-                    this.handleScanFile(e.target.files?.[0]);
-                    e.target.value = '';
-                });
-                this.elements.scanApplyBtn?.addEventListener('click', () => {
-                    this.applyPendingScan(true);
-                });
+                if (this.elements.scanCameraInput && !this.elements.scanCameraInput.dataset.bound) {
+                    this.elements.scanCameraInput.dataset.bound = '1';
+                    this.elements.scanCameraInput.addEventListener('change', (e) => {
+                        warmupOCR();
+                        void this.handleScanFile(e.target.files?.[0]);
+                        e.target.value = '';
+                    });
+                }
+                if (this.elements.scanAlbumInput && !this.elements.scanAlbumInput.dataset.bound) {
+                    this.elements.scanAlbumInput.dataset.bound = '1';
+                    this.elements.scanAlbumInput.addEventListener('change', (e) => {
+                        warmupOCR();
+                        void this.handleScanFile(e.target.files?.[0]);
+                        e.target.value = '';
+                    });
+                }
+                if (this.elements.scanApplyBtn && !this.elements.scanApplyBtn.dataset.bound) {
+                    this.elements.scanApplyBtn.dataset.bound = '1';
+                    this.elements.scanApplyBtn.addEventListener('click', () => {
+                        this.applyPendingScan(true);
+                    });
+                }
             }
 
             isNativeApp() {
@@ -4130,26 +4113,12 @@
             }
 
             getCameraPlugin() {
-                if (!this.isNativeApp() || !window.Capacitor) return null;
+                if (!this.isNativeApp() || !window.Capacitor?.registerPlugin) return null;
                 if (!this.cameraPlugin) {
-                    if (window.Capacitor.isPluginAvailable?.('Camera')) {
-                        this.cameraPlugin = window.Capacitor.Plugins?.Camera
-                            || window.Capacitor.registerPlugin('Camera');
-                    } else if (window.Capacitor.registerPlugin) {
-                        this.cameraPlugin = window.Capacitor.registerPlugin('Camera');
-                    }
+                    this.cameraPlugin = window.Capacitor.Plugins?.Camera
+                        || window.Capacitor.registerPlugin('Camera');
                 }
-                return this.cameraPlugin?.getPhoto ? this.cameraPlugin : null;
-            }
-
-            configureScanPickers() {
-                const useNativeCamera = this.isNativeApp() && Boolean(this.getCameraPlugin());
-                const mode = useNativeCamera ? 'native-picker' : 'web-picker';
-                [this.elements.scanCameraWrap, this.elements.scanAlbumWrap].forEach((wrap) => {
-                    if (!wrap) return;
-                    wrap.classList.remove('native-picker', 'web-picker');
-                    wrap.classList.add(mode);
-                });
+                return typeof this.cameraPlugin?.getPhoto === 'function' ? this.cameraPlugin : null;
             }
 
             async dataUrlToFile(dataUrl, filename) {
@@ -4169,33 +4138,31 @@
             async pickScanImage(source) {
                 if (this.isScanning) return;
                 this.labelOCRService.warmup();
+                if (this.elements.scanStatusText) {
+                    this.elements.scanStatusText.textContent = '開啟中… Opening…';
+                }
+                this.elements.scanStatus?.classList.add('visible');
+
+                const input = source === 'camera'
+                    ? this.elements.scanCameraInput
+                    : this.elements.scanAlbumInput;
+
+                if (!this.isNativeApp()) {
+                    this.elements.scanStatus?.classList.remove('visible');
+                    input?.click();
+                    return;
+                }
 
                 const Camera = this.getCameraPlugin();
                 if (!Camera) {
-                    this.configureScanPickers();
-                    const input = source === 'camera'
-                        ? this.elements.scanCameraInput
-                        : this.elements.scanAlbumInput;
-                    if (!this.isNativeApp() && input) {
-                        input.click();
-                        return;
-                    }
+                    this.elements.scanStatus?.classList.remove('visible');
                     const label = source === 'camera' ? '相機 Camera' : '相簿 Album';
                     this.showError(`無法開啟${label} · Camera plugin unavailable`, { stayOnStep: true });
                     return;
                 }
 
                 try {
-                    const permissionType = source === 'camera' ? 'camera' : 'photos';
-                    if (Camera.checkPermissions) {
-                        const status = await Camera.checkPermissions();
-                        const current = status?.[permissionType] || status?.photos;
-                        if (current === 'denied' && Camera.requestPermissions) {
-                            await Camera.requestPermissions(
-                                source === 'camera' ? { permissions: ['camera'] } : { permissions: ['photos'] }
-                            );
-                        }
-                    } else if (Camera.requestPermissions) {
+                    if (Camera.requestPermissions) {
                         await Camera.requestPermissions(
                             source === 'camera' ? { permissions: ['camera'] } : { permissions: ['photos'] }
                         );
@@ -4215,6 +4182,7 @@
                     const file = await this.dataUrlToFile(photo.dataUrl, `label_scan_${Date.now()}.jpg`);
                     await this.handleScanFile(file);
                 } catch (err) {
+                    this.elements.scanStatus?.classList.remove('visible');
                     if (this.isScanPickerCancelled(err)) return;
                     const label = source === 'camera' ? '相機 Camera' : '相簿 Album';
                     this.showError(`無法開啟${label} · Could not open picker (${err?.message || 'unknown error'})`, { stayOnStep: true });
@@ -5084,12 +5052,21 @@
         }
 
         // Initialize calculator when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            const calculator = new ElectricityCalculator();
-            if (window.Capacitor?.isNativePlatform?.()) {
-                window.addEventListener('focus', () => calculator.configureScanPickers(), { passive: true });
-            }
-        });
+        function bootCalculator() {
+            if (window.hkCalculator) return window.hkCalculator;
+            window.hkCalculator = new ElectricityCalculator();
+            return window.hkCalculator;
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootCalculator);
+        } else {
+            bootCalculator();
+        }
+
+        window.addEventListener('capacitorDidRegisterPlugins', () => {
+            window.hkCalculator?.bindScanControls?.();
+        }, { passive: true });
 
         // Android / Chrome install prompt (not supported on iOS Safari)
         window.addEventListener('beforeinstallprompt', (e) => {
