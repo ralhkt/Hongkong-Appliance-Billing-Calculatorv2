@@ -806,6 +806,26 @@
             color: white;
         }
 
+        .appliance-chip {
+            font-size: 0.75rem;
+            padding: 0.45rem 0.65rem;
+            min-height: 34px;
+        }
+
+        .appliance-group-label {
+            width: 100%;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--ios-gray);
+            margin-top: 0.375rem;
+        }
+
+        .appliance-group-label:first-child {
+            margin-top: 0;
+        }
+
         .hero-result {
             background: linear-gradient(135deg, hsl(142, 71%, 42%), hsl(142, 60%, 36%));
             border-radius: var(--radius);
@@ -1677,96 +1697,355 @@
             }
         }
 
-        // HK MEELS standard reference operating basis (機電署《產品能源標籤實務守則》)
+        // HK MEELS + common household reference basis (機電署《產品能源標籤實務守則》)
         const APPLIANCE_CATALOG = {
-            room_ac: {
-                label: '冷氣機 AC',
-                labelRatedHours: 1136,
-                ratedNote: 'MEELS 標準：全年製冷運作 1,136 小時 · EMSD: 1,136 cooling hrs/yr',
-                defaultHoursHelper: '標籤年耗電量以全年 1,136 小時製冷運作計算',
-                suggestedUsageHours: 1104,
-                usageIsCycles: false,
-                ocrRegex: /冷氣|空調|room\s*air|air\s*condition/i
-            },
             refrigerator: {
                 label: '雪櫃 Refrigerator',
+                group: '冷凍冷藏',
                 labelRatedHours: 8760,
-                ratedNote: 'MEELS 標準：全年 24 小時運作（8,760 小時）· Full-year 24/7 operation',
+                ratedNote: 'MEELS：全年 24 小時運作（8,760 小時）',
                 defaultHoursHelper: '標籤年耗電量以全年不間斷運作計算',
                 suggestedUsageHours: 8760,
                 usageIsCycles: false,
                 ocrRegex: /雪櫃|冰箱|refrigerat/i
             },
-            washing: {
-                label: '洗衣機 Washer',
-                labelRatedHours: 365,
-                ratedNote: 'MEELS 標準：每年 365 次洗衣程序 · EMSD: 365 cycles/yr',
-                defaultHoursHelper: '標籤年耗電量以每年 365 次標準洗衣計算；下方「年使用」請填實際次數',
-                suggestedUsageHours: 365,
-                usageIsCycles: true,
-                usageLabel: '年使用次數 Annual Uses',
-                usageUnit: '次 uses',
-                usageHelper: '輸入全年實際洗衣次數（標籤基準為 365 次）· Enter annual wash cycles',
-                ocrRegex: /洗衣|washing\s*machine/i
+            freezer: {
+                label: '冷凍櫃 Freezer',
+                group: '冷凍冷藏',
+                labelRatedHours: 8760,
+                ratedNote: 'MEELS 冷凍器具：全年 24 小時運作（8,760 小時）',
+                defaultHoursHelper: '標籤年耗電量以全年不間斷運作計算',
+                suggestedUsageHours: 8760,
+                usageIsCycles: false,
+                ocrRegex: /冷凍櫃|freezer/i
+            },
+            wine_cooler: {
+                label: '酒櫃 Wine Cooler',
+                group: '冷凍冷藏',
+                labelRatedHours: 8760,
+                ratedNote: 'MEELS 冷凍器具：全年 24 小時運作（8,760 小時）',
+                defaultHoursHelper: '標籤年耗電量以全年不間斷運作計算',
+                suggestedUsageHours: 8760,
+                usageIsCycles: false,
+                ocrRegex: /酒櫃|wine\s*cool/i
+            },
+            room_ac_split: {
+                label: '分體冷氣 Split AC',
+                group: '冷氣空調',
+                labelRatedHours: 1136,
+                ratedNote: 'MEELS：全年製冷運作 1,136 小時',
+                defaultHoursHelper: '標籤年耗電量以全年 1,136 小時製冷運作計算',
+                suggestedUsageHours: 1104,
+                usageIsCycles: false,
+                ocrRegex: /分體|split\s*type|split\s*ac/i
+            },
+            room_ac_window: {
+                label: '窗口冷氣 Window AC',
+                group: '冷氣空調',
+                labelRatedHours: 1136,
+                ratedNote: 'MEELS：全年製冷運作 1,136 小時',
+                defaultHoursHelper: '標籤年耗電量以全年 1,136 小時製冷運作計算',
+                suggestedUsageHours: 1104,
+                usageIsCycles: false,
+                ocrRegex: /窗口|窗機|window\s*ac|single\s*package/i
+            },
+            room_ac_reverse: {
+                label: '冷暖冷氣 Reverse AC',
+                group: '冷氣空調',
+                labelRatedHours: 1136,
+                ratedNote: 'MEELS：製冷 1,136 小時；標籤或另列供暖年耗電量',
+                defaultHoursHelper: '逆轉循環標籤可分開列明製冷/供暖年耗電量，請按標籤填寫 kWh',
+                suggestedUsageHours: 1104,
+                usageIsCycles: false,
+                ocrRegex: /逆轉|冷暖|reverse\s*cycle|heat\s*pump/i
+            },
+            room_ac: {
+                label: '冷氣機 AC (一般)',
+                group: '冷氣空調',
+                labelRatedHours: 1136,
+                ratedNote: 'MEELS：全年製冷運作 1,136 小時',
+                defaultHoursHelper: '標籤年耗電量以全年 1,136 小時製冷運作計算',
+                suggestedUsageHours: 1104,
+                usageIsCycles: false,
+                ocrRegex: /冷氣|空調|room\s*air|air\s*condition/i
+            },
+            fan: {
+                label: '電風扇 Fan',
+                group: '冷氣空調',
+                labelRatedHours: 1460,
+                ratedNote: '參考估算：每日 4 小時 × 365 日（非 MEELS 強制標籤）',
+                defaultHoursHelper: '無能源標籤時之參考基準，可按說明書或手動調整',
+                suggestedUsageHours: 1460,
+                usageIsCycles: false,
+                ocrRegex: /電風扇|fan/i
+            },
+            air_purifier: {
+                label: '空氣淨化機 Purifier',
+                group: '冷氣空調',
+                labelRatedHours: 8760,
+                ratedNote: '參考估算：長開運作 8,760 小時（非 MEELS 強制標籤）',
+                defaultHoursHelper: '若長期開啟，可比照全年運作；否則請手動調整',
+                suggestedUsageHours: 8760,
+                usageIsCycles: false,
+                ocrRegex: /空氣淨化|air\s*purif/i
             },
             dehumidifier: {
                 label: '抽濕機 Dehumidifier',
+                group: '冷氣空調',
                 labelRatedHours: 450,
-                ratedNote: 'MEELS 標準：全年 450 小時運作 · EMSD: 450 hrs/yr',
+                ratedNote: 'MEELS：全年 450 小時標準運作',
                 defaultHoursHelper: '標籤年耗電量以全年 450 小時標準運作計算',
                 suggestedUsageHours: 552,
                 usageIsCycles: false,
                 ocrRegex: /抽濕|除濕|dehumid/i
             },
+            washing: {
+                label: '洗衣機 Washer',
+                group: '洗衣乾衣',
+                labelRatedHours: 365,
+                ratedNote: 'MEELS：每年 365 次洗衣程序',
+                defaultHoursHelper: '標籤年耗電量以每年 365 次標準洗衣計算',
+                suggestedUsageHours: 365,
+                usageIsCycles: true,
+                usageLabel: '年使用次數 Annual Uses',
+                usageUnit: '次 uses',
+                usageHelper: '輸入全年實際洗衣次數（標籤基準為 365 次）',
+                ocrRegex: /洗衣機|洗衣(?!乾)|washing\s*machine/i
+            },
+            washer_dryer: {
+                label: '洗衣乾衣機 Combo',
+                group: '洗衣乾衣',
+                labelRatedHours: 365,
+                ratedNote: 'MEELS：每年 365 次洗衣（只計洗衣耗電，不含乾衣）',
+                defaultHoursHelper: '能源標籤只計算洗衣程序，不含乾衣功能耗電',
+                suggestedUsageHours: 365,
+                usageIsCycles: true,
+                usageLabel: '年使用次數 Annual Uses',
+                usageUnit: '次 uses',
+                usageHelper: '輸入全年實際洗衣次數（標籤基準為 365 次）',
+                ocrRegex: /洗衣乾衣|washer.?dryer/i
+            },
+            dryer: {
+                label: '乾衣機 Dryer',
+                group: '洗衣乾衣',
+                labelRatedHours: 365,
+                ratedNote: '參考估算：每年 365 次乾衣程序（非 MEELS 獨立類別）',
+                defaultHoursHelper: '請按實際乾衣次數或說明書調整',
+                suggestedUsageHours: 365,
+                usageIsCycles: true,
+                usageLabel: '年使用次數 Annual Uses',
+                usageUnit: '次 uses',
+                usageHelper: '輸入全年實際乾衣次數',
+                ocrRegex: /乾衣|dryer/i
+            },
             tv: {
                 label: '電視 TV',
+                group: '影音顯示',
                 labelRatedHours: 1460,
-                ratedNote: 'MEELS 標準：每日 4 小時 × 365 日 · EMSD: 4 hrs/day × 365 days',
+                ratedNote: 'MEELS：每日 4 小時 × 365 日（1,460 小時）',
                 defaultHoursHelper: '標籤年耗電量以每日 4 小時、全年 1,460 小時計算',
                 suggestedUsageHours: 1460,
                 usageIsCycles: false,
                 ocrRegex: /電視|television|\btv\b/i
             },
-            water_heater: {
-                label: '儲水式熱水爐 Water Heater',
+            monitor: {
+                label: '顯示器 Monitor',
+                group: '影音顯示',
+                labelRatedHours: 1460,
+                ratedNote: '參考估算：每日 4 小時 × 365 日',
+                defaultHoursHelper: '非 MEELS 強制標籤，可按實際開機時數調整',
+                suggestedUsageHours: 2000,
+                usageIsCycles: false,
+                ocrRegex: /顯示器|monitor/i
+            },
+            desktop_pc: {
+                label: '電腦主機 Desktop',
+                group: '資訊科技',
+                labelRatedHours: 2000,
+                ratedNote: '參考估算：辦公日約 2,000 小時/年',
+                defaultHoursHelper: '非 MEELS 強制標籤，可按實際開機時數調整',
+                suggestedUsageHours: 2000,
+                usageIsCycles: false,
+                ocrRegex: /電腦|desktop|pc/i
+            },
+            laptop: {
+                label: '筆記本電腦 Laptop',
+                group: '資訊科技',
+                labelRatedHours: 2000,
+                ratedNote: '參考估算：辦公日約 2,000 小時/年',
+                defaultHoursHelper: '非 MEELS 強制標籤，可按實際使用時數調整',
+                suggestedUsageHours: 2000,
+                usageIsCycles: false,
+                ocrRegex: /筆記|notebook|laptop/i
+            },
+            router_nas: {
+                label: '路由器/NAS Router',
+                group: '資訊科技',
                 labelRatedHours: 8760,
-                ratedNote: 'MEELS 標準：全年待機及標準用水模式 · Full-year standby pattern',
-                defaultHoursHelper: '標籤年耗電量以全年標準待機及用水模式計算',
+                ratedNote: '參考估算：全年 24/7 運作（8,760 小時）',
+                defaultHoursHelper: '長期開機設備，可按實際運作時間調整',
                 suggestedUsageHours: 8760,
                 usageIsCycles: false,
-                ocrRegex: /熱水|water\s*heat/i
+                ocrRegex: /路由器|router|nas|網絡儲存/i
+            },
+            printer: {
+                label: '打印機 Printer',
+                group: '資訊科技',
+                labelRatedHours: 200,
+                ratedNote: '參考估算：約 200 小時/年（間歇使用）',
+                defaultHoursHelper: '非 MEELS 強制標籤，請按實際使用調整',
+                suggestedUsageHours: 200,
+                usageIsCycles: false,
+                ocrRegex: /打印|printer/i
             },
             induction: {
                 label: '電磁爐 Induction',
+                group: '廚房電器',
                 labelRatedHours: 365,
-                ratedNote: 'MEELS 標準：全年 365 小時運作 · EMSD: ~1 hr/day × 365 days',
+                ratedNote: 'MEELS：全年 365 小時標準烹調運作',
                 defaultHoursHelper: '標籤年耗電量以全年 365 小時標準烹調運作計算',
                 suggestedUsageHours: 365,
                 usageIsCycles: false,
-                ocrRegex: /電磁|induction/i
+                ocrRegex: /電磁爐|induction/i
+            },
+            microwave: {
+                label: '微波爐 Microwave',
+                group: '廚房電器',
+                labelRatedHours: 365,
+                ratedNote: '參考估算：每日約 1 小時 × 365 日',
+                defaultHoursHelper: '非 MEELS 強制標籤，可按實際使用調整',
+                suggestedUsageHours: 365,
+                usageIsCycles: false,
+                ocrRegex: /微波|microwave/i
+            },
+            rice_cooker: {
+                label: '電飯煲 Rice Cooker',
+                group: '廚房電器',
+                labelRatedHours: 1095,
+                ratedNote: '參考估算：每日 3 小時 × 365 日',
+                defaultHoursHelper: '非 MEELS 強制標籤，可按實際使用調整',
+                suggestedUsageHours: 1095,
+                usageIsCycles: false,
+                ocrRegex: /電飯|rice\s*cook/i
+            },
+            electric_kettle: {
+                label: '電熱水壺 Kettle',
+                group: '廚房電器',
+                labelRatedHours: 365,
+                ratedNote: '參考估算：每日約 1 小時 × 365 日',
+                defaultHoursHelper: '非 MEELS 強制標籤，可按實際使用調整',
+                suggestedUsageHours: 365,
+                usageIsCycles: false,
+                ocrRegex: /熱水壺|kettle/i
+            },
+            oven: {
+                label: '電焗爐 Oven',
+                group: '廚房電器',
+                labelRatedHours: 365,
+                ratedNote: '參考估算：全年 365 小時烹調運作',
+                defaultHoursHelper: '非 MEELS 強制標籤，可按實際使用調整',
+                suggestedUsageHours: 365,
+                usageIsCycles: false,
+                ocrRegex: /焗爐|烤箱|oven/i
+            },
+            dishwasher: {
+                label: '洗碗機 Dishwasher',
+                group: '廚房電器',
+                labelRatedHours: 280,
+                ratedNote: '參考估算：每年 280 次（非香港 MEELS 類別）',
+                defaultHoursHelper: '香港 MEELS 未涵蓋洗碗機，請按說明書或實際次數調整',
+                suggestedUsageHours: 280,
+                usageIsCycles: true,
+                usageLabel: '年使用次數 Annual Uses',
+                usageUnit: '次 uses',
+                usageHelper: '輸入全年實際洗碗次數',
+                ocrRegex: /洗碗|dishwasher/i
+            },
+            water_heater: {
+                label: '儲水式熱水爐 Storage WH',
+                group: '熱水照明',
+                labelRatedHours: 8760,
+                ratedNote: 'MEELS：全年待機及標準用水模式',
+                defaultHoursHelper: '標籤年耗電量以全年標準待機及用水模式計算',
+                suggestedUsageHours: 8760,
+                usageIsCycles: false,
+                ocrRegex: /儲水式|storage.*water|water\s*heat/i
+            },
+            instant_water_heater: {
+                label: '即熱式熱水爐 Instant WH',
+                group: '熱水照明',
+                labelRatedHours: 365,
+                ratedNote: '參考估算：間歇使用約 365 小時/年',
+                defaultHoursHelper: '非儲水式 MEELS 類別，請按實際淋浴/使用時間調整',
+                suggestedUsageHours: 365,
+                usageIsCycles: false,
+                ocrRegex: /即熱|instant.*heat/i
             },
             led_lamp: {
                 label: 'LED 燈 LED Lamp',
+                group: '熱水照明',
                 labelRatedHours: 1095,
-                ratedNote: 'MEELS 標準：每日 3 小時 × 365 日 · EMSD: 3 hrs/day × 365 days',
+                ratedNote: 'MEELS：每日 3 小時 × 365 日（1,095 小時）',
                 defaultHoursHelper: '標籤年耗電量以每日 3 小時、全年 1,095 小時計算',
                 suggestedUsageHours: 1095,
                 usageIsCycles: false,
-                ocrRegex: /LED|燈飾|燈泡|lamp/i
+                ocrRegex: /LED|LED燈/i
             },
             cfl: {
                 label: '慳電膽 CFL',
+                group: '熱水照明',
                 labelRatedHours: 1095,
-                ratedNote: 'MEELS 標準：每日 3 小時 × 365 日 · EMSD: 3 hrs/day × 365 days',
+                ratedNote: 'MEELS：每日 3 小時 × 365 日（1,095 小時）',
                 defaultHoursHelper: '標籤年耗電量以每日 3 小時、全年 1,095 小時計算',
                 suggestedUsageHours: 1095,
                 usageIsCycles: false,
                 ocrRegex: /慳電|螢光|compact\s*fluorescent|cfl/i
             },
+            exhaust_fan: {
+                label: '抽氣扇/浴室寶 Vent Fan',
+                group: '其他',
+                labelRatedHours: 1460,
+                ratedNote: '參考估算：每日 4 小時 × 365 日',
+                defaultHoursHelper: '請按實際開啟時間調整',
+                suggestedUsageHours: 1460,
+                usageIsCycles: false,
+                ocrRegex: /抽氣|浴室寶|vent\s*fan|extractor/i
+            },
+            hair_dryer: {
+                label: '風筒 Hair Dryer',
+                group: '其他',
+                labelRatedHours: 100,
+                ratedNote: '參考估算：約 100 小時/年（間歇使用）',
+                defaultHoursHelper: '請按實際使用時間調整',
+                suggestedUsageHours: 100,
+                usageIsCycles: false,
+                ocrRegex: /風筒|hair\s*dry/i
+            },
+            iron: {
+                label: '熨斗 Iron',
+                group: '其他',
+                labelRatedHours: 100,
+                ratedNote: '參考估算：約 100 小時/年（間歇使用）',
+                defaultHoursHelper: '請按實際使用時間調整',
+                suggestedUsageHours: 100,
+                usageIsCycles: false,
+                ocrRegex: /熨斗|iron/i
+            },
+            ev_charger: {
+                label: 'EV 充電器 EV Charger',
+                group: '其他',
+                labelRatedHours: 1200,
+                ratedNote: '參考估算：請按實際充電時數或 kWh 調整',
+                defaultHoursHelper: '電動車充電請以實際年充電量為準',
+                suggestedUsageHours: 1200,
+                usageIsCycles: false,
+                ocrRegex: /充電|ev\s*charg|electric\s*vehicle/i
+            },
             custom: {
                 label: '其他/手動 Custom',
+                group: '其他',
                 labelRatedHours: 1200,
-                ratedNote: '手動輸入標籤額定小時 · Enter rated hours manually',
+                ratedNote: '手動輸入標籤額定小時',
                 defaultHoursHelper: '請按能源標籤或說明書輸入標準測試基準',
                 suggestedUsageHours: null,
                 usageIsCycles: false,
@@ -1774,9 +2053,24 @@
             }
         };
 
-        const APPLIANCE_ORDER = [
-            'refrigerator', 'room_ac', 'washing', 'tv', 'dehumidifier',
-            'water_heater', 'induction', 'led_lamp', 'cfl', 'custom'
+        const APPLIANCE_GROUPS = [
+            { id: 'cold', title: '冷凍冷藏 Cooling', types: ['refrigerator', 'freezer', 'wine_cooler'] },
+            { id: 'ac', title: '冷氣空調 AC & Air', types: ['room_ac_split', 'room_ac_window', 'room_ac_reverse', 'room_ac', 'fan', 'air_purifier', 'dehumidifier'] },
+            { id: 'laundry', title: '洗衣乾衣 Laundry', types: ['washing', 'washer_dryer', 'dryer'] },
+            { id: 'av', title: '影音顯示 AV', types: ['tv', 'monitor'] },
+            { id: 'it', title: '資訊科技 IT', types: ['desktop_pc', 'laptop', 'router_nas', 'printer'] },
+            { id: 'kitchen', title: '廚房電器 Kitchen', types: ['induction', 'microwave', 'rice_cooker', 'electric_kettle', 'oven', 'dishwasher'] },
+            { id: 'heat_light', title: '熱水照明 Heat & Light', types: ['water_heater', 'instant_water_heater', 'led_lamp', 'cfl'] },
+            { id: 'other', title: '其他 Other', types: ['exhaust_fan', 'hair_dryer', 'iron', 'ev_charger', 'custom'] }
+        ];
+
+        const APPLIANCE_OCR_ORDER = [
+            'washer_dryer', 'room_ac_reverse', 'room_ac_split', 'room_ac_window', 'room_ac',
+            'refrigerator', 'freezer', 'wine_cooler', 'washing', 'dryer', 'dehumidifier', 'tv',
+            'monitor', 'water_heater', 'instant_water_heater', 'induction', 'microwave',
+            'rice_cooker', 'electric_kettle', 'oven', 'dishwasher', 'led_lamp', 'cfl', 'fan',
+            'air_purifier', 'desktop_pc', 'laptop', 'router_nas', 'printer', 'exhaust_fan',
+            'hair_dryer', 'iron', 'ev_charger'
         ];
 
         class EnergyLabelParser {
@@ -1873,7 +2167,7 @@
                     rawText: text
                 };
 
-                for (const typeId of APPLIANCE_ORDER) {
+                for (const typeId of APPLIANCE_OCR_ORDER) {
                     const spec = APPLIANCE_CATALOG[typeId];
                     if (!spec?.ocrRegex?.test(normalized)) continue;
                     result.productType = typeId;
@@ -2190,16 +2484,23 @@
                 const container = this.elements.appliancePresets;
                 if (!container) return;
                 container.innerHTML = '';
-                APPLIANCE_ORDER.forEach((typeId) => {
-                    const spec = APPLIANCE_CATALOG[typeId];
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'appliance-chip rate-chip';
-                    btn.dataset.appliance = typeId;
-                    btn.textContent = spec.label;
-                    if (typeId === this.selectedAppliance) btn.classList.add('active');
-                    btn.addEventListener('click', () => this.applyApplianceType(typeId));
-                    container.appendChild(btn);
+                APPLIANCE_GROUPS.forEach((group) => {
+                    const heading = document.createElement('div');
+                    heading.className = 'appliance-group-label';
+                    heading.textContent = group.title;
+                    container.appendChild(heading);
+                    group.types.forEach((typeId) => {
+                        const spec = APPLIANCE_CATALOG[typeId];
+                        if (!spec) return;
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'appliance-chip rate-chip';
+                        btn.dataset.appliance = typeId;
+                        btn.textContent = spec.label;
+                        if (typeId === this.selectedAppliance) btn.classList.add('active');
+                        btn.addEventListener('click', () => this.applyApplianceType(typeId));
+                        container.appendChild(btn);
+                    });
                 });
             }
 
