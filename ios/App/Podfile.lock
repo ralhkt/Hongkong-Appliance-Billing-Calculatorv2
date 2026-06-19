@@ -1,6 +1,8 @@
 PODS:
   - Capacitor (7.6.7):
     - CapacitorCordova
+  - CapacitorCamera (7.0.5):
+    - Capacitor
   - CapacitorCordova (7.6.7)
   - GoogleDataTransport (10.1.0):
     - nanopb (~> 3.30910.0)
@@ -58,6 +60,7 @@ PODS:
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorCamera (from `../../node_modules/@capacitor/camera`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "PantristCapacitorPluginMlKitTextRecognition (from `../../node_modules/@pantrist/capacitor-plugin-ml-kit-text-recognition`)"
 
@@ -79,6 +82,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorCamera:
+    :path: "../../node_modules/@capacitor/camera"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
   PantristCapacitorPluginMlKitTextRecognition:
@@ -86,6 +91,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Capacitor: ee608ffbcf73b0030813d77ce8b10142f26cad4a
+  CapacitorCamera: fdbf24f93bc44ca13c4209866368a1972349d3d2
   CapacitorCordova: 139e2ed3d91c54b5aeae7941135c9f9aefc6da1d
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleMLKit: eff9e23ec1d90ea4157a1ee2e32a4f610c5b3318
@@ -101,6 +107,6 @@ SPEC CHECKSUMS:
   PantristCapacitorPluginMlKitTextRecognition: 44720ec62d2298cd4e2fae0bafa21228475978b8
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
 
-PODFILE CHECKSUM: 0697de08070b68f11295bb69d727d2387b1d4f68
+PODFILE CHECKSUM: 0428a0d60c1ae09b63055de00db1a64bd212c478
 
 COCOAPODS: 1.12.1
