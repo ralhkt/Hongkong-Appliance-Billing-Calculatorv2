@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Hong Kong Appliance Electricity Bill Calculator",
   "scripts": {
-    "build": "cp index.html www/index.html && mkdir -p www/data www/js/domain && cp data/clp-tariff.json data/hke-tariff.json www/data/ && sed 's/^export //' src/domain/appliance-search.js > www/js/domain/appliance-search.js && cp node_modules/@capacitor/core/dist/capacitor.js www/capacitor.js",
+    "build": "cp index.html www/index.html && mkdir -p www/data www/js/domain && cp data/clp-tariff.json data/hke-tariff.json www/data/ && for f in src/domain/*.js; do sed 's/^export //' \"$f\" > \"www/js/domain/$(basename \"$f\")\"; done && cp node_modules/@capacitor/core/dist/capacitor.js www/capacitor.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "cap:sync": "npm run build && npx cap sync",
