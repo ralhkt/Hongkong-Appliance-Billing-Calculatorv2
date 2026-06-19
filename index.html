@@ -1235,6 +1235,180 @@
             margin-top: 0;
         }
 
+        .appliance-picker-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid hsl(20, 5.9%, 90%);
+            border-radius: var(--radius);
+            background: white;
+            font-size: 1rem;
+            font-weight: 500;
+            color: hsl(20, 14.3%, 4.1%);
+            cursor: pointer;
+            min-height: var(--touch-target);
+            text-align: left;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .appliance-picker-trigger:active {
+            transform: scale(0.99);
+        }
+
+        .appliance-picker-trigger:focus-visible {
+            outline: none;
+            border-color: var(--ios-blue);
+            box-shadow: 0 0 0 2px hsla(207, 100%, 58%, 0.2);
+        }
+
+        .appliance-picker-value {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .appliance-picker-chevron {
+            flex-shrink: 0;
+            color: var(--ios-gray);
+            display: flex;
+            align-items: center;
+        }
+
+        .appliance-picker-sheet {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            pointer-events: none;
+        }
+
+        .appliance-picker-sheet:not([hidden]) {
+            pointer-events: auto;
+        }
+
+        .appliance-picker-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .appliance-picker-sheet.is-open .appliance-picker-backdrop {
+            opacity: 1;
+        }
+
+        .appliance-picker-panel {
+            position: relative;
+            background: hsl(0, 0%, 97%);
+            border-radius: 1rem 1rem 0 0;
+            max-height: min(72vh, 560px);
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .appliance-picker-sheet.is-open .appliance-picker-panel {
+            transform: translateY(0);
+        }
+
+        .appliance-picker-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid hsl(20, 5.9%, 90%);
+            background: white;
+            border-radius: 1rem 1rem 0 0;
+            flex-shrink: 0;
+        }
+
+        .appliance-picker-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .appliance-picker-done {
+            border: none;
+            background: transparent;
+            color: var(--ios-blue);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            min-height: var(--touch-target);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .appliance-picker-list {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0.5rem 0 0.75rem;
+        }
+
+        .appliance-picker-group {
+            margin-bottom: 0.5rem;
+        }
+
+        .appliance-picker-group-title {
+            padding: 0.5rem 1rem 0.375rem;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--ios-gray);
+        }
+
+        .appliance-picker-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            width: calc(100% - 1rem);
+            margin: 0 0.5rem;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: var(--radius);
+            background: white;
+            font-size: 1rem;
+            font-weight: 500;
+            color: hsl(20, 14.3%, 4.1%);
+            text-align: left;
+            cursor: pointer;
+            min-height: var(--touch-target);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .appliance-picker-option:active {
+            background: hsl(20, 5.9%, 96%);
+        }
+
+        .appliance-picker-option.active {
+            color: var(--ios-blue);
+            font-weight: 600;
+        }
+
+        .appliance-picker-check {
+            flex-shrink: 0;
+            color: var(--ios-blue);
+            opacity: 0;
+        }
+
+        .appliance-picker-option.active .appliance-picker-check {
+            opacity: 1;
+        }
+
         .hero-result {
             background: linear-gradient(135deg, hsl(142, 71%, 42%), hsl(142, 60%, 36%));
             border-radius: var(--radius);
@@ -1580,6 +1754,34 @@
                 border-color: var(--ios-blue);
             }
 
+            .appliance-picker-trigger {
+                background: hsl(240, 10%, 18%);
+                border-color: hsl(240, 10%, 28%);
+                color: hsl(0, 0%, 92%);
+            }
+
+            .appliance-picker-panel {
+                background: hsl(240, 10%, 14%);
+            }
+
+            .appliance-picker-header {
+                background: hsl(240, 10%, 18%);
+                border-color: hsl(240, 10%, 28%);
+            }
+
+            .appliance-picker-title {
+                color: hsl(0, 0%, 92%);
+            }
+
+            .appliance-picker-option {
+                background: hsl(240, 10%, 20%);
+                color: hsl(0, 0%, 92%);
+            }
+
+            .appliance-picker-option:active {
+                background: hsl(240, 10%, 26%);
+            }
+
             .back-btn {
                 background: hsl(240, 10%, 22%);
                 color: hsl(207, 100%, 70%);
@@ -1844,7 +2046,12 @@
                         <!-- Appliance Type -->
                         <div class="input-group">
                             <span class="label" id="applianceTypeLabel">電器類型 Appliance Type</span>
-                            <div id="appliancePresets" class="appliance-presets" role="group" aria-labelledby="applianceTypeLabel"></div>
+                            <button type="button" id="appliancePickerTrigger" class="appliance-picker-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="applianceTypeLabel">
+                                <span id="appliancePickerValue" class="appliance-picker-value">雪櫃 Refrigerator</span>
+                                <span class="appliance-picker-chevron" aria-hidden="true">
+                                    <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                                </span>
+                            </button>
                             <p id="applianceRatedNote" class="helper-text">選擇電器以套用機電署 MEELS 標準測試基準 · Select appliance for EMSD standard test basis</p>
                         </div>
 
@@ -2116,6 +2323,17 @@
             </div>
         </div>
     </main>
+
+    <div id="appliancePickerSheet" class="appliance-picker-sheet" hidden>
+        <div id="appliancePickerBackdrop" class="appliance-picker-backdrop"></div>
+        <div class="appliance-picker-panel" role="dialog" aria-modal="true" aria-labelledby="appliancePickerTitle">
+            <div class="appliance-picker-header">
+                <h3 id="appliancePickerTitle" class="appliance-picker-title">選擇電器類型 Select Appliance</h3>
+                <button type="button" id="appliancePickerDone" class="appliance-picker-done">完成 Done</button>
+            </div>
+            <div id="appliancePickerList" class="appliance-picker-list" role="listbox" aria-labelledby="appliancePickerTitle"></div>
+        </div>
+    </div>
     </div>
 
     <script>
@@ -3270,7 +3488,7 @@
 
                 try {
                     this.householdProvider = this.homeStore.getActiveHome()?.provider || 'clp';
-                    this.renderApplianceChips();
+                    this.renderAppliancePicker();
                     this.applyApplianceType(this.selectedAppliance, false);
                     this.configureScanPickers();
                     this.syncActiveHomeUI();
@@ -3359,7 +3577,12 @@
                     scanTypeValue: document.getElementById('scanTypeValue'),
                     scanConfidence: document.getElementById('scanConfidence'),
                     scanApplyBtn: document.getElementById('scanApplyBtn'),
-                    appliancePresets: document.getElementById('appliancePresets'),
+                    appliancePickerTrigger: document.getElementById('appliancePickerTrigger'),
+                    appliancePickerValue: document.getElementById('appliancePickerValue'),
+                    appliancePickerSheet: document.getElementById('appliancePickerSheet'),
+                    appliancePickerBackdrop: document.getElementById('appliancePickerBackdrop'),
+                    appliancePickerDone: document.getElementById('appliancePickerDone'),
+                    appliancePickerList: document.getElementById('appliancePickerList'),
                     applianceRatedNote: document.getElementById('applianceRatedNote'),
                     defaultHoursHelper: document.getElementById('defaultHoursHelper'),
                     defaultHoursUnit: document.getElementById('defaultHoursUnit'),
@@ -3369,37 +3592,87 @@
                 };
             }
 
-            renderApplianceChips() {
-                const container = this.elements.appliancePresets;
+            renderAppliancePicker() {
+                const container = this.elements.appliancePickerList;
                 if (!container) return;
                 container.innerHTML = '';
                 APPLIANCE_GROUPS.forEach((group) => {
+                    const groupEl = document.createElement('div');
+                    groupEl.className = 'appliance-picker-group';
                     const heading = document.createElement('div');
-                    heading.className = 'appliance-group-label';
+                    heading.className = 'appliance-picker-group-title';
                     heading.textContent = group.title;
-                    container.appendChild(heading);
+                    groupEl.appendChild(heading);
                     group.types.forEach((typeId) => {
                         const spec = APPLIANCE_CATALOG[typeId];
                         if (!spec) return;
                         const btn = document.createElement('button');
                         btn.type = 'button';
-                        btn.className = 'appliance-chip rate-chip';
+                        btn.className = 'appliance-picker-option';
                         btn.dataset.appliance = typeId;
-                        btn.textContent = spec.label;
+                        btn.setAttribute('role', 'option');
+                        btn.setAttribute('aria-selected', typeId === this.selectedAppliance ? 'true' : 'false');
                         if (typeId === this.selectedAppliance) btn.classList.add('active');
-                        btn.addEventListener('click', () => this.applyApplianceType(typeId));
-                        container.appendChild(btn);
+                        btn.innerHTML = `
+                            <span>${spec.label}</span>
+                            <svg class="appliance-picker-check svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                        `;
+                        btn.addEventListener('click', () => {
+                            this.applyApplianceType(typeId);
+                            this.closeAppliancePicker();
+                        });
+                        groupEl.appendChild(btn);
                     });
+                    container.appendChild(groupEl);
                 });
+            }
+
+            updateAppliancePickerSelection() {
+                this.elements.appliancePickerList?.querySelectorAll('.appliance-picker-option').forEach((option) => {
+                    const isActive = option.dataset.appliance === this.selectedAppliance;
+                    option.classList.toggle('active', isActive);
+                    option.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                });
+            }
+
+            openAppliancePicker() {
+                const sheet = this.elements.appliancePickerSheet;
+                if (!sheet || !sheet.hidden) return;
+                this.updateAppliancePickerSelection();
+                sheet.hidden = false;
+                requestAnimationFrame(() => sheet.classList.add('is-open'));
+                this.elements.appliancePickerTrigger?.setAttribute('aria-expanded', 'true');
+                document.body.style.overflow = 'hidden';
+                const active = sheet.querySelector('.appliance-picker-option.active');
+                if (active) {
+                    requestAnimationFrame(() => active.scrollIntoView({ block: 'nearest' }));
+                }
+            }
+
+            closeAppliancePicker() {
+                const sheet = this.elements.appliancePickerSheet;
+                if (!sheet || sheet.hidden) return;
+                sheet.classList.remove('is-open');
+                this.elements.appliancePickerTrigger?.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+                const onEnd = () => {
+                    sheet.hidden = true;
+                    sheet.removeEventListener('transitionend', onEnd);
+                };
+                sheet.addEventListener('transitionend', onEnd);
+                setTimeout(() => {
+                    if (!sheet.classList.contains('is-open')) sheet.hidden = true;
+                }, 320);
             }
 
             applyApplianceType(typeId, updateUsage = true) {
                 const spec = APPLIANCE_CATALOG[typeId] || APPLIANCE_CATALOG.custom;
                 this.selectedAppliance = typeId;
 
-                this.elements.appliancePresets?.querySelectorAll('.appliance-chip').forEach((chip) => {
-                    chip.classList.toggle('active', chip.dataset.appliance === typeId);
-                });
+                if (this.elements.appliancePickerValue) {
+                    this.elements.appliancePickerValue.textContent = spec.label;
+                }
+                this.updateAppliancePickerSelection();
 
                 if (this.elements.defaultHours) {
                     this.elements.defaultHours.value = spec.labelRatedHours;
@@ -3454,6 +3727,14 @@
                 this.elements.backFromAppliancesBtn?.addEventListener('click', () => this.showStep(1));
                 document.querySelectorAll('[data-household-provider]').forEach((chip) => {
                     chip.addEventListener('click', () => this.setHouseholdProvider(chip.dataset.householdProvider));
+                });
+                this.elements.appliancePickerTrigger?.addEventListener('click', () => this.openAppliancePicker());
+                this.elements.appliancePickerBackdrop?.addEventListener('click', () => this.closeAppliancePicker());
+                this.elements.appliancePickerDone?.addEventListener('click', () => this.closeAppliancePicker());
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && !this.elements.appliancePickerSheet?.hidden) {
+                        this.closeAppliancePicker();
+                    }
                 });
                 this.elements.editHomeSettingsBtn?.addEventListener('click', () => this.setHomeSettingsEditMode(true));
                 this.elements.saveHomeSettingsBtn?.addEventListener('click', () => this.saveHomeSettings());
@@ -4338,6 +4619,10 @@
             }
 
             showStep(step) {
+                if (step !== 1) {
+                    this.closeAppliancePicker();
+                }
+
                 if (this.currentStep === 3 && step !== 3) {
                     this.homeSettingsEditing = false;
                 }
