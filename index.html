@@ -450,6 +450,51 @@
             display: none;
         }
 
+        .icloud-sync-status {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            color: var(--ios-gray);
+            margin-top: 0.5rem;
+        }
+
+        .icloud-sync-status.active {
+            color: var(--ios-blue);
+        }
+
+        .sync-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .sync-action-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid hsl(207, 100%, 85%);
+            border-radius: var(--radius);
+            background: white;
+            color: var(--ios-blue);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 36px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .sync-action-btn:active {
+            transform: scale(0.98);
+        }
+
+        .sync-file-input {
+            display: none;
+        }
+
         .home-settings-actions {
             display: flex;
             gap: 0.5rem;
@@ -2232,6 +2277,21 @@
                                 </button>
                             </div>
                             <div id="homeSwitcher" class="home-switcher" role="tablist" aria-label="Accommodation locations"></div>
+                            <p id="icloudSyncStatus" class="icloud-sync-status hidden" role="status" aria-live="polite">
+                                <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                                <span id="icloudSyncStatusText"></span>
+                            </p>
+                            <div id="syncActions" class="sync-actions hidden">
+                                <button type="button" id="exportBackupBtn" class="sync-action-btn">
+                                    <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    備份 Backup
+                                </button>
+                                <button type="button" id="importBackupBtn" class="sync-action-btn">
+                                    <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    還原 Restore
+                                </button>
+                                <input type="file" id="importBackupInput" class="sync-file-input" accept="application/json,.json" aria-hidden="true" />
+                            </div>
                             <div id="homeEditForm" class="home-edit-form" hidden>
                                 <div class="input-group">
                                     <label for="homeLibraryName" class="label">電器庫名稱 Library Name</label>
@@ -2893,6 +2953,143 @@
         class HomeLibraryStore {
             constructor() {
                 this.memoryState = null;
+                this.cloudAvailable = false;
+                this.cloudPlugin = null;
+                this.cloudSyncing = false;
+                this.onCloudUpdate = null;
+            }
+
+            getCloudPlugin() {
+                if (!window.Capacitor?.isNativePlatform?.()) return null;
+                if (!this.cloudPlugin) {
+                    this.cloudPlugin = window.Capacitor.registerPlugin('ICloudSync');
+                }
+                return this.cloudPlugin;
+            }
+
+            async initCloudSync(onUpdated) {
+                this.onCloudUpdate = onUpdated;
+                const plugin = this.getCloudPlugin();
+                if (!plugin) return false;
+
+                try {
+                    const { available } = await plugin.isAvailable();
+                    this.cloudAvailable = Boolean(available);
+                    if (!this.cloudAvailable) return false;
+
+                    await plugin.synchronize?.();
+                    await this.mergeFromCloud();
+
+                    await plugin.addListener('change', () => {
+                        this.handleCloudChange();
+                    });
+                    return true;
+                } catch (err) {
+                    console.warn('iCloud sync unavailable', err);
+                    this.cloudAvailable = false;
+                    return false;
+                }
+            }
+
+            async handleCloudChange() {
+                if (this.cloudSyncing) return;
+                const changed = await this.mergeFromCloud();
+                if (changed && this.onCloudUpdate) {
+                    this.onCloudUpdate();
+                }
+            }
+
+            async pushToCloud(state) {
+                const plugin = this.getCloudPlugin();
+                if (!this.cloudAvailable || !plugin) return;
+                try {
+                    await plugin.setString({
+                        key: HOME_LIBRARY_KEY,
+                        value: JSON.stringify(state)
+                    });
+                } catch (err) {
+                    console.warn('iCloud push failed', err);
+                }
+            }
+
+            async pullCloudState() {
+                const plugin = this.getCloudPlugin();
+                if (!this.cloudAvailable || !plugin) return null;
+                try {
+                    await plugin.synchronize?.();
+                    const result = await plugin.getString({ key: HOME_LIBRARY_KEY });
+                    if (!result?.value) return null;
+                    return this.normalizeState(JSON.parse(result.value));
+                } catch {
+                    return null;
+                }
+            }
+
+            getLastModified(state) {
+                if (!state?.lastModified) return 0;
+                const parsed = Date.parse(state.lastModified);
+                return Number.isFinite(parsed) ? parsed : 0;
+            }
+
+            readLocalState() {
+                try {
+                    const raw = localStorage.getItem(HOME_LIBRARY_KEY);
+                    if (!raw) return null;
+                    return this.normalizeState(JSON.parse(raw));
+                } catch {
+                    return null;
+                }
+            }
+
+            async mergeFromCloud() {
+                if (!this.cloudAvailable) return false;
+                this.cloudSyncing = true;
+                try {
+                    const cloudState = await this.pullCloudState();
+                    const localState = this.readLocalState();
+                    if (!cloudState && !localState) return false;
+
+                    let winner = null;
+                    let pushCloud = false;
+
+                    if (!cloudState) {
+                        winner = localState;
+                        pushCloud = true;
+                    } else if (!localState) {
+                        winner = cloudState;
+                    } else {
+                        const cloudTime = this.getLastModified(cloudState);
+                        const localTime = this.getLastModified(localState);
+                        if (cloudTime > localTime) {
+                            winner = cloudState;
+                        } else if (localTime > cloudTime) {
+                            winner = localState;
+                            pushCloud = true;
+                        } else {
+                            winner = localState;
+                        }
+                    }
+
+                    const memoryTime = this.memoryState ? this.getLastModified(this.memoryState) : 0;
+                    const winnerTime = this.getLastModified(winner);
+                    if (this.memoryState && winnerTime <= memoryTime) {
+                        return false;
+                    }
+
+                    this.memoryState = winner;
+                    try {
+                        localStorage.setItem(HOME_LIBRARY_KEY, JSON.stringify(winner));
+                    } catch {
+                        /* keep in-memory fallback */
+                    }
+
+                    if (pushCloud) {
+                        await this.pushToCloud(winner);
+                    }
+                    return true;
+                } finally {
+                    this.cloudSyncing = false;
+                }
             }
 
             createHome(libraryName, location = '', provider = 'clp') {
@@ -2974,13 +3171,17 @@
                 return state;
             }
 
-            persist(state) {
+            persist(state, options = {}) {
                 const normalized = this.normalizeState(state);
+                normalized.lastModified = new Date().toISOString();
                 this.memoryState = normalized;
                 try {
                     localStorage.setItem(HOME_LIBRARY_KEY, JSON.stringify(normalized));
                 } catch {
                     /* keep in-memory fallback */
+                }
+                if (!options.skipCloud && this.cloudAvailable) {
+                    this.pushToCloud(normalized);
                 }
                 return normalized;
             }
@@ -3457,9 +3658,94 @@
                     this.setHomeSettingsEditMode(false);
                     this.updateSavedBadge();
                     this.loadClpTariff();
+                    this.startCloudSync();
                 } catch (err) {
                     console.error('Calculator init error', err);
                 }
+            }
+
+            async startCloudSync() {
+                const enabled = await this.homeStore.initCloudSync(() => this.handleCloudDataUpdate());
+                this.updateICloudSyncStatus(enabled);
+            }
+
+            handleCloudDataUpdate() {
+                this.householdProvider = this.homeStore.getActiveHome()?.provider || 'clp';
+                this.syncActiveHomeUI();
+                this.renderSavedAppliances();
+                this.updateSavedBadge();
+            }
+
+            updateICloudSyncStatus(enabled) {
+                const status = this.elements.icloudSyncStatus;
+                const text = this.elements.icloudSyncStatusText;
+                const actions = this.elements.syncActions;
+                if (!status || !text) return;
+
+                if (enabled) {
+                    text.textContent = '已透過 iCloud 自動同步 · Auto-synced via iCloud';
+                    status.classList.add('active');
+                    status.classList.remove('hidden');
+                    actions?.classList.add('hidden');
+                } else if (this.isNativeApp()) {
+                    text.textContent = '使用備份／還原在兩部 iPhone 間同步（AirDrop 或 iCloud 雲碟）';
+                    status.classList.remove('active');
+                    status.classList.remove('hidden');
+                    actions?.classList.remove('hidden');
+                } else {
+                    status.classList.add('hidden');
+                    actions?.classList.add('hidden');
+                }
+            }
+
+            async exportLibraryBackup() {
+                try {
+                    const state = this.homeStore.loadState();
+                    const json = JSON.stringify(state, null, 2);
+                    const filename = `hk-electricity-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                    const file = new File([json], filename, { type: 'application/json' });
+
+                    if (navigator.canShare?.({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: '港電費計算器備份',
+                            text: 'Hong Kong Electricity Calculator backup'
+                        });
+                        return;
+                    }
+
+                    const blob = new Blob([json], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                } catch (err) {
+                    if (err?.name === 'AbortError') return;
+                    alert('備份失敗 Backup failed');
+                }
+            }
+
+            importLibraryBackup(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        const parsed = JSON.parse(String(reader.result || ''));
+                        if (!parsed?.homes?.length) {
+                            throw new Error('Invalid backup');
+                        }
+                        const normalized = this.homeStore.normalizeState(parsed);
+                        normalized.lastModified = new Date().toISOString();
+                        this.homeStore.persist(normalized);
+                        this.handleCloudDataUpdate();
+                        alert('還原成功 Restore complete');
+                    } catch {
+                        alert('還原失敗：檔案格式不正確 Restore failed: invalid file');
+                    }
+                };
+                reader.readAsText(file);
             }
 
             initializeElements() {
@@ -3488,6 +3774,12 @@
                     saveApplianceTitle: document.getElementById('saveApplianceTitle'),
                     appliancesCardTitle: document.getElementById('appliancesCardTitle'),
                     homeSwitcher: document.getElementById('homeSwitcher'),
+                    icloudSyncStatus: document.getElementById('icloudSyncStatus'),
+                    icloudSyncStatusText: document.getElementById('icloudSyncStatusText'),
+                    syncActions: document.getElementById('syncActions'),
+                    exportBackupBtn: document.getElementById('exportBackupBtn'),
+                    importBackupBtn: document.getElementById('importBackupBtn'),
+                    importBackupInput: document.getElementById('importBackupInput'),
                     homeEditForm: document.getElementById('homeEditForm'),
                     editHomeSettingsBtn: document.getElementById('editHomeSettingsBtn'),
                     homeLibraryName: document.getElementById('homeLibraryName'),
@@ -3699,6 +3991,13 @@
                 this.elements.saveHomeSettingsBtn?.addEventListener('click', () => this.saveHomeSettings());
                 this.elements.cancelHomeSettingsBtn?.addEventListener('click', () => this.cancelHomeSettingsEdit());
                 this.elements.addHomeBtn?.addEventListener('click', () => this.addNewHome());
+                this.elements.exportBackupBtn?.addEventListener('click', () => this.exportLibraryBackup());
+                this.elements.importBackupBtn?.addEventListener('click', () => this.elements.importBackupInput?.click());
+                this.elements.importBackupInput?.addEventListener('change', (e) => {
+                    const file = e.target.files?.[0];
+                    this.importLibraryBackup(file);
+                    e.target.value = '';
+                });
                 this.elements.deleteHomeBtn?.addEventListener('click', () => this.deleteCurrentHome());
                 [this.elements.homeLibraryName, this.elements.homeLocation].forEach((input) => {
                     input?.addEventListener('keydown', (e) => {
@@ -4608,6 +4907,9 @@
                 if (isAppliances) {
                     try {
                         this.homeSettingsEditing = false;
+                        this.homeStore.mergeFromCloud().then((changed) => {
+                            if (changed) this.handleCloudDataUpdate();
+                        });
                         this.syncActiveHomeUI();
                         this.setHomeSettingsEditMode(false);
                         this.renderSavedAppliances();
