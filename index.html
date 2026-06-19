@@ -3547,8 +3547,9 @@
                     this.pendingScan = parsed;
                     this.showScanPreview(parsed, imageDataUrl);
 
+                    this.applyParsedLabel(parsed);
                     if (parsed.kWh != null) {
-                        this.applyParsedLabel(parsed);
+                        this.hideError();
                         this.goToResults();
                     } else {
                         this.showError('未能讀取年耗電量，請對準標籤上的 kWh 數字後重試 · Could not read kWh — align the label number and retry');
@@ -3597,8 +3598,7 @@
                     this.elements.costPerKWh.value = netRate.toFixed(3);
                 }
 
-                const basic = residential.basicTariff;
-                const fuel = residential.fuelCharge;
+                const basic = Number(residential.basicTariff);
                 const breakdown = (Number.isFinite(basic) && Number.isFinite(fuel))
                     ? `基本電價 Basic HK$${basic.toFixed(3)} + 燃料費 Fuel HK$${fuel.toFixed(3)} = 淨電價 Net HK$${netRate.toFixed(3)}/kWh`
                     : `淨電價 Net tariff HK$${netRate.toFixed(3)}/kWh`;
