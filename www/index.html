@@ -156,6 +156,82 @@
             display: flex;
         }
 
+        .help-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border: none;
+            border-radius: 999px;
+            background: hsl(207, 100%, 95%);
+            color: var(--ios-blue);
+            cursor: pointer;
+            flex-shrink: 0;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .help-btn:active {
+            transform: scale(0.97);
+        }
+
+        .help-sheet-body {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem 1.125rem 1.25rem;
+        }
+
+        .help-sheet-intro {
+            font-size: 0.875rem;
+            color: var(--ios-gray);
+            line-height: 1.5;
+            margin: 0 0 1rem;
+        }
+
+        .help-step-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .help-step-item {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .help-step-num {
+            flex-shrink: 0;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            background: var(--ios-blue);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .help-step-text {
+            font-size: 0.9375rem;
+            line-height: 1.45;
+            color: hsl(20, 14.3%, 4.1%);
+        }
+
+        .help-step-text-en {
+            display: block;
+            margin-top: 0.125rem;
+            font-size: 0.75rem;
+            color: var(--ios-gray);
+        }
+
         .my-home-btn {
             display: flex;
             align-items: center;
@@ -1985,6 +2061,15 @@
                 color: hsl(207, 100%, 70%);
             }
 
+            .help-btn {
+                background: hsl(207, 40%, 22%);
+                color: hsl(207, 100%, 75%);
+            }
+
+            .help-step-text {
+                color: hsl(0, 0%, 92%);
+            }
+
             .my-home-btn {
                 background: hsl(142, 30%, 18%);
                 color: hsl(142, 60%, 70%);
@@ -2127,6 +2212,9 @@
                         <p id="headerSubtitle">Hong Kong Electricity Calculator</p>
                     </div>
                     <div class="header-actions">
+                        <button id="helpBtn" class="help-btn" type="button" aria-label="使用說明 Usage instructions" aria-haspopup="dialog">
+                            <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </button>
                         <button id="myAppliancesBtn" class="my-home-btn" type="button" aria-label="My home appliances">
                             <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                             <span class="my-home-btn-label">我的電器</span>
@@ -2351,23 +2439,6 @@
                     </div>
                 </div>
 
-                <div class="card info-card">
-                    <div class="card-content">
-                        <div class="info-content">
-                            <svg class="svg-icon info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                            <div>
-                                <h3 class="info-title">使用說明 Usage Instructions</h3>
-                                <ul class="info-list">
-                                    <li>• 輸入電器全年實際運作小時數</li>
-                                    <li>• 選擇電器類型以套用正確的標籤額定小時（MEELS 標準）</li>
-                                    <li>• 標籤用電量取自能源標籤（1 kWh = 1 度電）</li>
-                                    <li>• 選擇電價預設或自行輸入每度電費用</li>
-                                    <li>• 完成後點擊「查看結果」進入結果頁</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Step 2: Results -->
@@ -2552,6 +2623,45 @@
             </div>
         </div>
     </main>
+
+    <div id="helpSheet" class="appliance-picker-sheet" hidden>
+        <div id="helpBackdrop" class="appliance-picker-backdrop"></div>
+        <div class="appliance-picker-panel" role="dialog" aria-modal="true" aria-labelledby="helpSheetTitle">
+            <div class="appliance-picker-header">
+                <h3 id="helpSheetTitle" class="appliance-picker-title">使用說明 How to Use</h3>
+                <button type="button" id="helpDone" class="appliance-picker-done">完成 Done</button>
+            </div>
+            <div class="help-sheet-body">
+                <p class="help-sheet-intro">輸入電器資料或掃描能源標籤，即可估算全年及每月電費。以下為建議操作順序：</p>
+                <ol class="help-step-list">
+                    <li class="help-step-item">
+                        <span class="help-step-num">1</span>
+                        <span class="help-step-text">拍攝或上傳能源標籤（可選）<span class="help-step-text-en">Scan or upload MEELS label (optional)</span></span>
+                    </li>
+                    <li class="help-step-item">
+                        <span class="help-step-num">2</span>
+                        <span class="help-step-text">選擇電器類型，套用 MEELS 標準額定小時<span class="help-step-text-en">Pick appliance type for rated hours</span></span>
+                    </li>
+                    <li class="help-step-item">
+                        <span class="help-step-num">3</span>
+                        <span class="help-step-text">輸入全年實際運作時數（或使用預設）<span class="help-step-text-en">Enter annual usage hours or use a preset</span></span>
+                    </li>
+                    <li class="help-step-item">
+                        <span class="help-step-num">4</span>
+                        <span class="help-step-text">輸入標籤年耗電量（1 kWh = 1 度電）<span class="help-step-text-en">Enter label annual kWh (1 kWh = 1 unit)</span></span>
+                    </li>
+                    <li class="help-step-item">
+                        <span class="help-step-num">5</span>
+                        <span class="help-step-text">選擇電力公司或輸入每度電價<span class="help-step-text-en">Choose provider or enter $/kWh rate</span></span>
+                    </li>
+                    <li class="help-step-item">
+                        <span class="help-step-num">6</span>
+                        <span class="help-step-text">點擊「查看結果」，並可儲存至「我的電器」<span class="help-step-text-en">Tap View Results, then save to My Appliances</span></span>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
 
     <div id="appliancePickerSheet" class="appliance-picker-sheet" hidden>
         <div id="appliancePickerBackdrop" class="appliance-picker-backdrop"></div>
@@ -4200,6 +4310,10 @@
                     stepDot1: document.getElementById('stepDot1'),
                     stepDot2: document.getElementById('stepDot2'),
                     stepLabel: document.getElementById('stepLabel'),
+                    helpBtn: document.getElementById('helpBtn'),
+                    helpSheet: document.getElementById('helpSheet'),
+                    helpBackdrop: document.getElementById('helpBackdrop'),
+                    helpDone: document.getElementById('helpDone'),
                     myAppliancesBtn: document.getElementById('myAppliancesBtn'),
                     myAppliancesBadge: document.getElementById('myAppliancesBadge'),
                     saveApplianceName: document.getElementById('saveApplianceName'),
@@ -4354,9 +4468,34 @@
                 });
             }
 
+            openHelpSheet() {
+                const sheet = this.elements.helpSheet;
+                if (!sheet || !sheet.hidden) return;
+                this.closeAppliancePicker();
+                sheet.hidden = false;
+                requestAnimationFrame(() => sheet.classList.add('is-open'));
+                document.body.style.overflow = 'hidden';
+            }
+
+            closeHelpSheet() {
+                const sheet = this.elements.helpSheet;
+                if (!sheet || sheet.hidden) return;
+                sheet.classList.remove('is-open');
+                document.body.style.overflow = '';
+                const onEnd = () => {
+                    sheet.hidden = true;
+                    sheet.removeEventListener('transitionend', onEnd);
+                };
+                sheet.addEventListener('transitionend', onEnd);
+                setTimeout(() => {
+                    if (!sheet.classList.contains('is-open')) sheet.hidden = true;
+                }, 320);
+            }
+
             openAppliancePicker() {
                 const sheet = this.elements.appliancePickerSheet;
                 if (!sheet || !sheet.hidden) return;
+                this.closeHelpSheet();
                 this.clearAppliancePickerSearch();
                 this.updateAppliancePickerSelection();
                 sheet.hidden = false;
@@ -4435,6 +4574,9 @@
                 const goBack = () => this.showStep(1);
                 this.elements.backBtn?.addEventListener('click', goBack);
                 this.elements.recalculateBtn?.addEventListener('click', goBack);
+                this.elements.helpBtn?.addEventListener('click', () => this.openHelpSheet());
+                this.elements.helpBackdrop?.addEventListener('click', () => this.closeHelpSheet());
+                this.elements.helpDone?.addEventListener('click', () => this.closeHelpSheet());
                 this.elements.myAppliancesBtn?.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.openMyAppliances();
@@ -4460,7 +4602,9 @@
                     this.elements.appliancePickerSearch?.focus();
                 });
                 document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape' && !this.elements.appliancePickerSheet?.hidden) {
+                    if (e.key === 'Escape' && !this.elements.helpSheet?.hidden) {
+                        this.closeHelpSheet();
+                    } else if (e.key === 'Escape' && !this.elements.appliancePickerSheet?.hidden) {
                         this.closeAppliancePicker();
                     }
                 });
@@ -5528,6 +5672,7 @@
             showStep(step) {
                 if (step !== 1) {
                     this.closeAppliancePicker();
+                    this.closeHelpSheet();
                 }
 
                 if (this.currentStep === 3 && step !== 3) {
@@ -5545,6 +5690,7 @@
                 this.elements.stepDot1?.classList.toggle('active', isInput);
                 this.elements.stepDot2?.classList.toggle('active', isResults);
                 this.elements.backBtn?.classList.toggle('visible', isResults);
+                this.elements.helpBtn?.classList.toggle('hidden', !isInput);
                 this.elements.myAppliancesBtn?.classList.toggle('active-nav', isAppliances);
                 if (this.elements.myAppliancesBtn) {
                     this.elements.myAppliancesBtn.setAttribute(
