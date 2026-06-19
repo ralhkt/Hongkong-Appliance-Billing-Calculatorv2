@@ -32,6 +32,13 @@ class ProgressiveTariffCalculator {
         return `每月 ${block.label}`;
     }
 
+    static formatProgressiveTariffSummary(tariff) {
+        const rates = tariff.blocks.map((block) => block.basic + tariff.fuelCharge);
+        const min = Math.min(...rates);
+        const max = Math.max(...rates);
+        return `${tariff.label} · ${tariff.blocks.length} 個收費分段 · 每度 HK$${min.toFixed(3)}–${max.toFixed(3)}`;
+    }
+
     static formatProgressiveTariffHtml(tariff, monthlyKwh = 0, itemCount = 0) {
         const intro = `<p class="tariff-note-intro"><strong>${tariff.label} 累進制電價</strong>：按<strong>每月</strong>總用電量分段計費。落在同一分段內的<strong>每一度電</strong>，均按該段電價收費（基本電費 + 燃料調整費），各段「用電量 × 該段電價」相加得出月費，再乘以 12 個月估算年費。<span class="tariff-note-en">Progressive tariff: each kWh within a monthly usage block is charged at that block's rate (basic + fuel). Block subtotals sum to the monthly bill.</span></p>`;
 
@@ -50,6 +57,11 @@ class ProgressiveTariffCalculator {
 }
 
 describe('ProgressiveTariffCalculator copy', () => {
+    it('summarises tier count and rate range', () => {
+        const summary = ProgressiveTariffCalculator.formatProgressiveTariffSummary(HK_PROGRESSIVE_TARIFFS.clp);
+        expect(summary).toBe('中電 CLP · 3 個收費分段 · 每度 HK$1.304–1.702');
+    });
+
     it('lists per-kWh net rate for each CLP block', () => {
         const html = ProgressiveTariffCalculator.formatProgressiveTariffHtml(HK_PROGRESSIVE_TARIFFS.clp);
         expect(html).toContain('每月首 400 度');

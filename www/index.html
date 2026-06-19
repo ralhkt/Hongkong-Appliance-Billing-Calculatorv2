@@ -521,15 +521,79 @@
             margin-bottom: 0.5rem;
         }
 
+        .household-tariff-note-wrap {
+            margin-bottom: 0.875rem;
+        }
+
+        .tariff-note-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid hsl(207, 100%, 90%);
+            border-radius: var(--radius);
+            background: hsl(207, 100%, 97%);
+            color: hsl(20, 14.3%, 4.1%);
+            font-size: 0.8125rem;
+            line-height: 1.4;
+            text-align: left;
+            cursor: pointer;
+            min-height: var(--touch-target);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .tariff-note-toggle:active {
+            background: hsl(207, 100%, 94%);
+        }
+
+        .tariff-note-toggle[aria-expanded="true"] {
+            border-radius: var(--radius) var(--radius) 0 0;
+            border-bottom-color: transparent;
+        }
+
+        .tariff-toggle-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tariff-toggle-summary {
+            display: block;
+            font-weight: 600;
+        }
+
+        .tariff-toggle-hint {
+            display: block;
+            margin-top: 0.125rem;
+            font-size: 0.6875rem;
+            color: var(--ios-blue);
+            font-weight: 500;
+        }
+
+        .tariff-note-toggle[aria-expanded="true"] .tariff-toggle-hint {
+            color: var(--ios-gray);
+        }
+
+        .tariff-toggle-chevron {
+            flex-shrink: 0;
+            color: var(--ios-gray);
+            transition: transform 0.2s ease;
+        }
+
+        .tariff-note-toggle[aria-expanded="true"] .tariff-toggle-chevron {
+            transform: rotate(180deg);
+        }
+
         .household-tariff-note {
             font-size: 0.75rem;
             color: var(--ios-gray);
             line-height: 1.45;
-            margin-bottom: 0.875rem;
-            padding: 0.625rem 0.75rem;
+            padding: 0.625rem 0.75rem 0.75rem;
             background: hsl(207, 100%, 97%);
-            border-radius: var(--radius);
+            border-radius: 0 0 var(--radius) var(--radius);
             border: 1px solid hsl(207, 100%, 90%);
+            border-top: 1px solid hsl(207, 100%, 92%);
         }
 
         .tariff-note-intro {
@@ -1936,6 +2000,16 @@
                 border-color: hsl(240, 10%, 28%);
             }
 
+            .tariff-note-toggle {
+                background: hsl(207, 40%, 16%);
+                border-color: hsl(207, 40%, 28%);
+                color: hsl(0, 0%, 92%);
+            }
+
+            .tariff-note-toggle:active {
+                background: hsl(207, 40%, 20%);
+            }
+
             .household-tariff-note {
                 background: hsl(207, 40%, 16%);
                 border-color: hsl(207, 40%, 28%);
@@ -2442,8 +2516,15 @@
                                 <button type="button" class="rate-chip" data-household-provider="hke" id="householdHkeChip">港燈 HKE</button>
                             </div>
                         </div>
-                        <div id="householdTariffNote" class="household-tariff-note" role="note">
-                            累進制電價說明載入中…
+                        <div class="household-tariff-note-wrap">
+                            <button type="button" id="householdTariffToggle" class="tariff-note-toggle" aria-expanded="false" aria-controls="householdTariffDetails">
+                                <span class="tariff-toggle-main">
+                                    <span id="householdTariffSummary" class="tariff-toggle-summary">累進制電價說明</span>
+                                    <span class="tariff-toggle-hint">點擊展開各段電價 · Tap to expand tier rates</span>
+                                </span>
+                                <svg class="tariff-toggle-chevron svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                            </button>
+                            <div id="householdTariffDetails" class="household-tariff-note" role="region" aria-labelledby="householdTariffToggle" hidden></div>
                         </div>
                         <div class="household-hero">
                             <div class="household-hero-label">全屋預計年電費（累進制）· Progressive Annual Bill</div>
@@ -3089,6 +3170,13 @@
                     return `每月${block.label}`;
                 }
                 return `每月 ${block.label}`;
+            }
+
+            static formatProgressiveTariffSummary(tariff) {
+                const rates = tariff.blocks.map((block) => block.basic + tariff.fuelCharge);
+                const min = Math.min(...rates);
+                const max = Math.max(...rates);
+                return `${tariff.label} · ${tariff.blocks.length} 個收費分段 · 每度 HK$${min.toFixed(3)}–${max.toFixed(3)}`;
             }
 
             static formatProgressiveTariffHtml(tariff, monthlyKwh = 0, itemCount = 0) {
@@ -3987,6 +4075,7 @@
                 this.homeSettingsEditing = false;
                 this.currentStep = 1;
                 this.previousStepBeforeAppliances = 1;
+                this.tariffNoteExpanded = false;
                 this.applianceSearch = new ApplianceSearchService(APPLIANCE_CATALOG, APPLIANCE_GROUPS);
                 this.appliancePickerQuery = '';
 
@@ -4137,7 +4226,9 @@
                     savedAppliancesEmpty: document.getElementById('savedAppliancesEmpty'),
                     householdClpChip: document.getElementById('householdClpChip'),
                     householdHkeChip: document.getElementById('householdHkeChip'),
-                    householdTariffNote: document.getElementById('householdTariffNote'),
+                    householdTariffToggle: document.getElementById('householdTariffToggle'),
+                    householdTariffSummary: document.getElementById('householdTariffSummary'),
+                    householdTariffDetails: document.getElementById('householdTariffDetails'),
                     householdAnnualCost: document.getElementById('householdAnnualCost'),
                     householdSummary: document.getElementById('householdSummary'),
                     householdCompare: document.getElementById('householdCompare'),
@@ -4357,6 +4448,7 @@
                 document.querySelectorAll('[data-household-provider]').forEach((chip) => {
                     chip.addEventListener('click', () => this.setHouseholdProvider(chip.dataset.householdProvider));
                 });
+                this.elements.householdTariffToggle?.addEventListener('click', () => this.toggleTariffNote());
                 this.elements.appliancePickerTrigger?.addEventListener('click', () => this.openAppliancePicker());
                 this.elements.appliancePickerBackdrop?.addEventListener('click', () => this.closeAppliancePicker());
                 this.elements.appliancePickerDone?.addEventListener('click', () => this.closeAppliancePicker());
@@ -5215,6 +5307,7 @@
             setHouseholdProvider(provider) {
                 if (!HK_PROGRESSIVE_TARIFFS[provider]) return;
                 this.householdProvider = provider;
+                this.tariffNoteExpanded = false;
                 const home = this.getActiveHome();
                 if (home) {
                     this.homeStore.updateHome(home.id, { provider });
@@ -5227,6 +5320,41 @@
                 document.querySelectorAll('[data-household-provider]').forEach((chip) => {
                     chip.classList.toggle('active', chip.dataset.householdProvider === this.householdProvider);
                 });
+            }
+
+            toggleTariffNote(forceExpanded) {
+                const expanded = typeof forceExpanded === 'boolean'
+                    ? forceExpanded
+                    : !this.tariffNoteExpanded;
+                this.tariffNoteExpanded = expanded;
+                if (this.elements.householdTariffToggle) {
+                    this.elements.householdTariffToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    const hint = this.elements.householdTariffToggle.querySelector('.tariff-toggle-hint');
+                    if (hint) {
+                        hint.textContent = expanded
+                            ? '點擊收起 · Tap to collapse'
+                            : '點擊展開各段電價 · Tap to expand tier rates';
+                    }
+                }
+                if (this.elements.householdTariffDetails) {
+                    this.elements.householdTariffDetails.hidden = !expanded;
+                }
+            }
+
+            updateHouseholdTariffNote(totals) {
+                if (this.elements.householdTariffSummary) {
+                    this.elements.householdTariffSummary.textContent =
+                        ProgressiveTariffCalculator.formatProgressiveTariffSummary(totals.tariff);
+                }
+                if (this.elements.householdTariffDetails) {
+                    this.elements.householdTariffDetails.innerHTML =
+                        ProgressiveTariffCalculator.formatProgressiveTariffHtml(
+                            totals.tariff,
+                            totals.monthlyKwh,
+                            totals.count
+                        );
+                }
+                this.toggleTariffNote(this.tariffNoteExpanded);
             }
 
             formatHouseholdCompare(totals) {
@@ -5248,13 +5376,7 @@
                 const listEl = this.elements.savedAppliancesList;
                 const emptyEl = this.elements.savedAppliancesEmpty;
 
-                if (this.elements.householdTariffNote) {
-                    this.elements.householdTariffNote.innerHTML = ProgressiveTariffCalculator.formatProgressiveTariffHtml(
-                        totals.tariff,
-                        totals.monthlyKwh,
-                        totals.count
-                    );
-                }
+                this.updateHouseholdTariffNote(totals);
                 if (this.elements.householdAnnualCost) {
                     this.elements.householdAnnualCost.textContent = this.formatHKD(totals.annualCost);
                 }
