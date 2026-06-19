@@ -142,6 +142,174 @@
             display: flex;
         }
 
+        .my-home-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-radius: 999px;
+            background: hsl(142, 71%, 94%);
+            color: hsl(142, 60%, 28%);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 36px;
+            position: relative;
+        }
+
+        .my-home-btn:active {
+            transform: scale(0.97);
+        }
+
+        .my-home-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.125rem;
+            height: 1.125rem;
+            padding: 0 0.25rem;
+            border-radius: 999px;
+            background: var(--ios-green);
+            color: white;
+            font-size: 0.6875rem;
+            font-weight: 700;
+        }
+
+        .my-home-badge.hidden {
+            display: none;
+        }
+
+        .save-appliance-card {
+            background: hsl(142, 71%, 96%);
+            border: 1px solid hsl(142, 50%, 85%);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .save-appliance-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            margin-bottom: 0.625rem;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .saved-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .saved-item {
+            background: white;
+            border: 1px solid hsl(20, 5.9%, 90%);
+            border-radius: var(--radius);
+            padding: 0.875rem 1rem;
+        }
+
+        .saved-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .saved-item-name {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .saved-item-type {
+            font-size: 0.75rem;
+            color: var(--ios-gray);
+            margin-top: 0.125rem;
+        }
+
+        .saved-item-cost {
+            font-size: 1.0625rem;
+            font-weight: 700;
+            color: var(--ios-green);
+            white-space: nowrap;
+        }
+
+        .saved-item-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            color: var(--ios-gray);
+            margin-bottom: 0.625rem;
+        }
+
+        .saved-item-stat strong {
+            color: hsl(20, 14.3%, 4.1%);
+            font-weight: 600;
+        }
+
+        .saved-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .saved-action-btn {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid hsl(20, 5.9%, 90%);
+            background: white;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 36px;
+        }
+
+        .saved-action-btn.edit {
+            color: var(--ios-blue);
+            border-color: hsl(207, 100%, 85%);
+        }
+
+        .saved-action-btn.delete {
+            color: var(--ios-red);
+            border-color: hsl(0, 70%, 85%);
+        }
+
+        .saved-empty {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--ios-gray);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .household-hero {
+            background: linear-gradient(135deg, hsl(142, 71%, 42%), hsl(142, 60%, 36%));
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            color: white;
+            text-align: center;
+        }
+
+        .household-hero-label {
+            font-size: 0.8125rem;
+            opacity: 0.9;
+        }
+
+        .household-hero-value {
+            font-size: clamp(1.375rem, 7vw, 1.75rem);
+            font-weight: 700;
+            margin: 0.25rem 0;
+        }
+
+        .household-hero-sub {
+            font-size: 0.75rem;
+            opacity: 0.85;
+        }
+
         .step-indicator {
             display: flex;
             align-items: center;
@@ -1176,6 +1344,30 @@
                 color: hsl(207, 100%, 70%);
             }
 
+            .my-home-btn {
+                background: hsl(142, 30%, 18%);
+                color: hsl(142, 60%, 70%);
+            }
+
+            .save-appliance-card {
+                background: hsl(142, 30%, 15%);
+                border-color: hsl(142, 30%, 28%);
+            }
+
+            .saved-item {
+                background: hsl(240, 10%, 18%);
+                border-color: hsl(240, 10%, 28%);
+            }
+
+            .saved-item-stat strong {
+                color: hsl(0, 0%, 90%);
+            }
+
+            .saved-action-btn {
+                background: hsl(240, 10%, 22%);
+                border-color: hsl(240, 10%, 30%);
+            }
+
             .button-outline {
                 background: hsl(240, 10%, 18%);
                 color: hsl(207, 100%, 70%);
@@ -1248,6 +1440,11 @@
                         <p id="headerSubtitle">Hong Kong Electricity Calculator</p>
                     </div>
                     <div class="header-actions">
+                        <button id="myAppliancesBtn" class="my-home-btn" type="button" aria-label="My home appliances">
+                            <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            我的電器
+                            <span id="myAppliancesBadge" class="my-home-badge hidden">0</span>
+                        </button>
                         <button id="backBtn" class="back-btn" type="button" aria-label="Back to input">
                             <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
                             返回
@@ -1539,6 +1736,21 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="save-appliance-card">
+                            <div class="save-appliance-title">
+                                <svg class="svg-icon-sm text-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                <span id="saveApplianceTitle">儲存到我的電器 Save to My Home</span>
+                            </div>
+                            <div class="input-group" style="margin-bottom: 0.75rem;">
+                                <label for="saveApplianceName" class="label">電器名稱 Name</label>
+                                <input id="saveApplianceName" class="input" type="text" placeholder="例如：客廳冷氣、主臥雪櫃" maxlength="40" enterkeyhint="done" />
+                            </div>
+                            <button id="saveApplianceBtn" class="button" type="button" style="background: var(--ios-green);">
+                                <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                                <span id="saveApplianceBtnText">儲存 Save</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1546,6 +1758,40 @@
                     <button id="recalculateBtn" class="button button-outline" type="button">
                         <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
                         返回修改 Back to Edit
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: My Home Appliances -->
+            <div id="stepAppliances" class="step-view">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <svg class="svg-icon text-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            我的電器庫 My Home Appliances
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="household-hero">
+                            <div class="household-hero-label">全屋預計年電費 · Total Annual Bill</div>
+                            <div class="household-hero-value" id="householdAnnualCost">HK$ 0.00</div>
+                            <div class="household-hero-sub" id="householdSummary">0 件電器 · 0 kWh/年</div>
+                        </div>
+                        <div id="savedAppliancesList" class="saved-list"></div>
+                        <div id="savedAppliancesEmpty" class="saved-empty hidden">
+                            尚未儲存任何電器。<br>完成計算後，在結果頁點擊「儲存」加入你的電器庫。<br><br>
+                            No appliances saved yet. Calculate and tap Save on the results page.
+                        </div>
+                    </div>
+                </div>
+                <div class="results-actions">
+                    <button id="addApplianceBtn" class="button" type="button">
+                        <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        新增電器 Add Appliance
+                    </button>
+                    <button id="backFromAppliancesBtn" class="button button-outline" type="button">
+                        <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                        返回計算 Back to Calculator
                     </button>
                 </div>
             </div>
@@ -2064,6 +2310,56 @@
             { id: 'other', title: '其他 Other', types: ['exhaust_fan', 'hair_dryer', 'iron', 'ev_charger', 'custom'] }
         ];
 
+        const SAVED_APPLIANCES_KEY = 'hk_saved_appliances_v1';
+
+        class SavedApplianceStore {
+            load() {
+                try {
+                    const raw = localStorage.getItem(SAVED_APPLIANCES_KEY);
+                    const parsed = raw ? JSON.parse(raw) : [];
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch {
+                    return [];
+                }
+            }
+
+            persist(items) {
+                localStorage.setItem(SAVED_APPLIANCES_KEY, JSON.stringify(items));
+            }
+
+            add(item) {
+                const items = this.load();
+                items.unshift(item);
+                this.persist(items);
+                return items;
+            }
+
+            update(id, patch) {
+                const items = this.load();
+                const index = items.findIndex((item) => item.id === id);
+                if (index === -1) return items;
+                items[index] = { ...items[index], ...patch, updatedAt: new Date().toISOString() };
+                this.persist(items);
+                return items;
+            }
+
+            remove(id) {
+                const items = this.load().filter((item) => item.id !== id);
+                this.persist(items);
+                return items;
+            }
+
+            getTotals(items) {
+                return items.reduce((acc, item) => {
+                    acc.count += 1;
+                    acc.annualCost += item.annualCost || 0;
+                    acc.annualKwh += item.annualKwh || 0;
+                    acc.monthlyCost += item.monthlyCost || 0;
+                    return acc;
+                }, { count: 0, annualCost: 0, annualKwh: 0, monthlyCost: 0 });
+            }
+        }
+
         const APPLIANCE_OCR_ORDER = [
             'washer_dryer', 'room_ac_reverse', 'room_ac_split', 'room_ac_window', 'room_ac',
             'refrigerator', 'freezer', 'wine_cooler', 'washing', 'dryer', 'dehumidifier', 'tv',
@@ -2413,8 +2709,10 @@
                 this.lastValidResults = null;
                 this.clpTariffService = new CLPTariffService();
                 this.labelOCRService = new LabelOCRService();
+                this.savedStore = new SavedApplianceStore();
                 this.pendingScan = null;
                 this.isScanning = false;
+                this.editingSavedId = null;
                 this.liveClpRate = 1.406;
                 this.currentStep = 1;
                 
@@ -2422,6 +2720,7 @@
                 this.renderApplianceChips();
                 this.applyApplianceType(this.selectedAppliance, false);
                 this.attachEventListeners();
+                this.updateSavedBadge();
                 this.loadClpTariff();
             }
 
@@ -2439,9 +2738,22 @@
                     errorMessage: document.getElementById('errorMessage'),
                     stepInput: document.getElementById('stepInput'),
                     stepResults: document.getElementById('stepResults'),
+                    stepAppliances: document.getElementById('stepAppliances'),
                     stepDot1: document.getElementById('stepDot1'),
                     stepDot2: document.getElementById('stepDot2'),
                     stepLabel: document.getElementById('stepLabel'),
+                    myAppliancesBtn: document.getElementById('myAppliancesBtn'),
+                    myAppliancesBadge: document.getElementById('myAppliancesBadge'),
+                    saveApplianceName: document.getElementById('saveApplianceName'),
+                    saveApplianceBtn: document.getElementById('saveApplianceBtn'),
+                    saveApplianceBtnText: document.getElementById('saveApplianceBtnText'),
+                    saveApplianceTitle: document.getElementById('saveApplianceTitle'),
+                    savedAppliancesList: document.getElementById('savedAppliancesList'),
+                    savedAppliancesEmpty: document.getElementById('savedAppliancesEmpty'),
+                    householdAnnualCost: document.getElementById('householdAnnualCost'),
+                    householdSummary: document.getElementById('householdSummary'),
+                    addApplianceBtn: document.getElementById('addApplianceBtn'),
+                    backFromAppliancesBtn: document.getElementById('backFromAppliancesBtn'),
                     headerSubtitle: document.getElementById('headerSubtitle'),
                     resultsCard: document.getElementById('resultsCard'),
                     heroCostValue: document.getElementById('heroCostValue'),
@@ -2553,6 +2865,17 @@
                 const goBack = () => this.showStep(1);
                 this.elements.backBtn?.addEventListener('click', goBack);
                 this.elements.recalculateBtn?.addEventListener('click', goBack);
+                this.elements.myAppliancesBtn?.addEventListener('click', () => this.showStep(3));
+                this.elements.addApplianceBtn?.addEventListener('click', () => {
+                    this.editingSavedId = null;
+                    this.resetSaveForm();
+                    this.showStep(1);
+                });
+                this.elements.backFromAppliancesBtn?.addEventListener('click', () => this.showStep(1));
+                this.elements.saveApplianceBtn?.addEventListener('click', () => this.saveCurrentAppliance());
+                this.elements.saveApplianceName?.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') this.saveCurrentAppliance();
+                });
 
                 this.elements.rateChips?.forEach((chip) => {
                     chip.addEventListener('click', () => {
@@ -2866,25 +3189,247 @@
                 return `HK$ ${amount.toFixed(2)}`;
             }
 
+            formatKwh(amount) {
+                return `${amount.toFixed(1)} kWh`;
+            }
+
+            getDefaultSaveName() {
+                const spec = APPLIANCE_CATALOG[this.selectedAppliance];
+                return spec?.label?.split(' ')[0] || '我的電器';
+            }
+
+            resetSaveForm() {
+                if (this.elements.saveApplianceName) {
+                    this.elements.saveApplianceName.value = this.getDefaultSaveName();
+                }
+                if (this.elements.saveApplianceTitle) {
+                    this.elements.saveApplianceTitle.textContent = '儲存到我的電器 Save to My Home';
+                }
+                if (this.elements.saveApplianceBtnText) {
+                    this.elements.saveApplianceBtnText.textContent = '儲存 Save';
+                }
+            }
+
+            updateSaveFormForEdit(name) {
+                if (this.elements.saveApplianceName) {
+                    this.elements.saveApplianceName.value = name;
+                }
+                if (this.elements.saveApplianceTitle) {
+                    this.elements.saveApplianceTitle.textContent = '更新此電器 Update Appliance';
+                }
+                if (this.elements.saveApplianceBtnText) {
+                    this.elements.saveApplianceBtnText.textContent = '更新 Update';
+                }
+            }
+
+            buildSavedRecord(name) {
+                const inputs = this.inputs;
+                const results = this.lastValidResults;
+                const multiplier = inputs.usageHours / inputs.defaultHours;
+                const annualKwh = inputs.kWh * multiplier;
+                return {
+                    id: this.editingSavedId || `appl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                    name: name.trim(),
+                    applianceType: this.selectedAppliance,
+                    applianceLabel: APPLIANCE_CATALOG[this.selectedAppliance]?.label || '其他',
+                    usageHours: inputs.usageHours,
+                    defaultHours: inputs.defaultHours,
+                    labelKwh: inputs.kWh,
+                    costPerKWh: inputs.costPerKWh,
+                    annualKwh,
+                    annualCost: results.annualCostByUsage,
+                    monthlyCost: results.monthlyCost,
+                    dailyCost: results.dailyCost,
+                    labelAnnualCost: results.annualCostByDefault,
+                    savedAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+            }
+
+            updateSavedBadge() {
+                const count = this.savedStore.load().length;
+                if (this.elements.myAppliancesBadge) {
+                    this.elements.myAppliancesBadge.textContent = String(count);
+                    this.elements.myAppliancesBadge.classList.toggle('hidden', count === 0);
+                }
+            }
+
+            renderSavedAppliances() {
+                const items = this.savedStore.load();
+                const totals = this.savedStore.getTotals(items);
+                const listEl = this.elements.savedAppliancesList;
+                const emptyEl = this.elements.savedAppliancesEmpty;
+
+                if (this.elements.householdAnnualCost) {
+                    this.elements.householdAnnualCost.textContent = this.formatHKD(totals.annualCost);
+                }
+                if (this.elements.householdSummary) {
+                    this.elements.householdSummary.textContent =
+                        `${totals.count} 件電器 · ${totals.annualKwh.toFixed(0)} kWh/年 · 月均 ${this.formatHKD(totals.monthlyCost)}`;
+                }
+
+                if (!listEl) return;
+                listEl.innerHTML = '';
+
+                if (!items.length) {
+                    emptyEl?.classList.remove('hidden');
+                    return;
+                }
+                emptyEl?.classList.add('hidden');
+
+                items.forEach((item) => {
+                    const card = document.createElement('div');
+                    card.className = 'saved-item';
+                    card.innerHTML = `
+                        <div class="saved-item-header">
+                            <div>
+                                <div class="saved-item-name"></div>
+                                <div class="saved-item-type"></div>
+                            </div>
+                            <div class="saved-item-cost"></div>
+                        </div>
+                        <div class="saved-item-stats">
+                            <div>年耗電 Annual <strong class="stat-kwh"></strong></div>
+                            <div>月費 Monthly <strong class="stat-monthly"></strong></div>
+                            <div>標籤 kWh <strong class="stat-label-kwh"></strong></div>
+                            <div>電價 Rate <strong class="stat-rate"></strong></div>
+                        </div>
+                        <div class="saved-item-actions">
+                            <button type="button" class="saved-action-btn edit">編輯 Edit</button>
+                            <button type="button" class="saved-action-btn delete">刪除 Delete</button>
+                        </div>
+                    `;
+                    card.querySelector('.saved-item-name').textContent = item.name;
+                    card.querySelector('.saved-item-type').textContent = item.applianceLabel;
+                    card.querySelector('.saved-item-cost').textContent = `${this.formatHKD(item.annualCost)}/年`;
+                    card.querySelector('.stat-kwh').textContent = this.formatKwh(item.annualKwh);
+                    card.querySelector('.stat-monthly').textContent = this.formatHKD(item.monthlyCost);
+                    card.querySelector('.stat-label-kwh').textContent = `${item.labelKwh} kWh`;
+                    card.querySelector('.stat-rate').textContent = `HK$${item.costPerKWh.toFixed(3)}`;
+
+                    card.querySelector('.edit')?.addEventListener('click', () => this.loadSavedAppliance(item.id));
+                    card.querySelector('.delete')?.addEventListener('click', () => this.deleteSavedAppliance(item.id));
+                    listEl.appendChild(card);
+                });
+            }
+
+            saveCurrentAppliance() {
+                if (!this.lastValidResults) {
+                    this.showError('請先完成計算 Please calculate first');
+                    return;
+                }
+                const name = this.elements.saveApplianceName?.value?.trim();
+                if (!name) {
+                    this.showError('請輸入電器名稱 Please enter a name');
+                    return;
+                }
+
+                const record = this.buildSavedRecord(name);
+                if (this.editingSavedId) {
+                    const existing = this.savedStore.load().find((item) => item.id === this.editingSavedId);
+                    record.id = this.editingSavedId;
+                    record.savedAt = existing?.savedAt || record.savedAt;
+                    this.savedStore.update(this.editingSavedId, record);
+                } else {
+                    this.savedStore.add(record);
+                }
+
+                this.editingSavedId = record.id;
+                this.updateSavedBadge();
+                this.renderSavedAppliances();
+                this.updateSaveFormForEdit(record.name);
+
+                if (this.elements.saveApplianceBtnText) {
+                    const original = this.elements.saveApplianceBtnText.textContent;
+                    this.elements.saveApplianceBtnText.textContent = '已儲存 ✓ Saved';
+                    setTimeout(() => {
+                        if (this.elements.saveApplianceBtnText) {
+                            this.elements.saveApplianceBtnText.textContent = original;
+                        }
+                    }, 1500);
+                }
+            }
+
+            loadSavedAppliance(id) {
+                const item = this.savedStore.load().find((entry) => entry.id === id);
+                if (!item) return;
+
+                this.editingSavedId = id;
+                this.applyApplianceType(item.applianceType, false);
+
+                if (this.elements.usageHours) this.elements.usageHours.value = item.usageHours;
+                if (this.elements.defaultHours) this.elements.defaultHours.value = item.defaultHours;
+                if (this.elements.kWh) this.elements.kWh.value = item.labelKwh;
+                if (this.elements.costPerKWh) this.elements.costPerKWh.value = item.costPerKWh.toFixed(3);
+
+                this.syncUsageChips(item.usageHours);
+                this.elements.rateChips?.forEach((chip) => {
+                    const chipRate = chip.dataset.provider === 'clp'
+                        ? this.liveClpRate
+                        : parseFloat(chip.dataset.rate);
+                    chip.classList.toggle('active', Math.abs(chipRate - item.costPerKWh) < 0.0005);
+                });
+
+                this.updateSaveFormForEdit(item.name);
+                if (this.calculate(false)) {
+                    this.showStep(2);
+                } else {
+                    this.showStep(1);
+                }
+            }
+
+            deleteSavedAppliance(id) {
+                const item = this.savedStore.load().find((entry) => entry.id === id);
+                if (!item) return;
+                const ok = confirm(`刪除「${item.name}」？\nDelete "${item.name}"?`);
+                if (!ok) return;
+
+                this.savedStore.remove(id);
+                if (this.editingSavedId === id) {
+                    this.editingSavedId = null;
+                    this.resetSaveForm();
+                }
+                this.updateSavedBadge();
+                this.renderSavedAppliances();
+            }
+
             showStep(step) {
                 this.currentStep = step;
                 const isInput = step === 1;
+                const isResults = step === 2;
+                const isAppliances = step === 3;
 
                 this.elements.stepInput?.classList.toggle('active', isInput);
-                this.elements.stepResults?.classList.toggle('active', !isInput);
+                this.elements.stepResults?.classList.toggle('active', isResults);
+                this.elements.stepAppliances?.classList.toggle('active', isAppliances);
                 this.elements.stepDot1?.classList.toggle('active', isInput);
-                this.elements.stepDot2?.classList.toggle('active', !isInput);
-                this.elements.backBtn?.classList.toggle('visible', !isInput);
+                this.elements.stepDot2?.classList.toggle('active', isResults);
+                this.elements.backBtn?.classList.toggle('visible', isResults);
 
                 if (this.elements.stepLabel) {
-                    this.elements.stepLabel.textContent = isInput
-                        ? '步驟 1/2 · 輸入參數'
-                        : '步驟 2/2 · 計算結果';
+                    if (isAppliances) {
+                        this.elements.stepLabel.textContent = '我的電器庫 · My Appliances';
+                    } else {
+                        this.elements.stepLabel.textContent = isInput
+                            ? '步驟 1/2 · 輸入參數'
+                            : '步驟 2/2 · 計算結果';
+                    }
                 }
                 if (this.elements.headerSubtitle) {
-                    this.elements.headerSubtitle.textContent = isInput
-                        ? 'Hong Kong Electricity Calculator'
-                        : 'Your Bill Estimate';
+                    if (isAppliances) {
+                        this.elements.headerSubtitle.textContent = 'Home Electricity Inventory';
+                    } else {
+                        this.elements.headerSubtitle.textContent = isInput
+                            ? 'Hong Kong Electricity Calculator'
+                            : 'Your Bill Estimate';
+                    }
+                }
+
+                if (isAppliances) {
+                    this.renderSavedAppliances();
+                }
+                if (isResults && !this.editingSavedId) {
+                    this.resetSaveForm();
                 }
 
                 const scrollEl = document.getElementById('mainScroll');
@@ -2895,6 +3440,9 @@
 
             goToResults() {
                 if (!this.calculate(true)) return;
+                if (!this.editingSavedId) {
+                    this.resetSaveForm();
+                }
                 this.showStep(2);
             }
 
