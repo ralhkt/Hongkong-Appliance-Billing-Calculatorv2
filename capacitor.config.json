@@ -3,8 +3,8 @@
   "appName": "港電費計算器",
   "webDir": "www",
   "ios": {
-    "contentInset": "automatic",
-    "backgroundColor": "#f8fafc",
+    "contentInset": "never",
+    "backgroundColor": "#f6f6f8",
     "allowsLinkPreview": false
   },
   "server": {
