@@ -35,7 +35,7 @@
             --ios-bg: hsl(240, 20%, 97%);
             --radius: 0.75rem;
             --touch-target: 44px;
-            --top-pane-height: calc(7.25rem + env(safe-area-inset-top));
+            --top-pane-height: calc(4.5rem + env(safe-area-inset-top));
         }
 
         html {
@@ -142,7 +142,8 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding-bottom: 0.625rem;
+            padding: 0.375rem 0 0.75rem;
+            margin-bottom: 0.25rem;
         }
 
         .step-dot {
@@ -998,7 +999,7 @@
         <button id="iosInstallDismiss" class="ios-install-dismiss" aria-label="Dismiss">✕</button>
     </div>
 
-    <!-- Fixed top pane: header + step indicator -->
+    <!-- Fixed top pane: logo / app title only -->
     <div class="top-pane" id="topPane">
         <header class="header">
             <div class="container">
@@ -1019,18 +1020,17 @@
                 </div>
             </div>
         </header>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
         <div class="container">
             <div class="step-indicator" aria-hidden="true">
                 <span class="step-dot active" id="stepDot1"></span>
                 <span class="step-dot" id="stepDot2"></span>
                 <span class="step-label" id="stepLabel">步驟 1/2 · 輸入參數</span>
             </div>
-        </div>
-    </div>
 
-    <!-- Main Content -->
-    <main class="main">
-        <div class="container">
             <!-- Step 1: Input -->
             <div id="stepInput" class="step-view active">
                 <div id="errorAlert" class="alert hidden">
