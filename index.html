@@ -426,31 +426,6 @@
             transform: scale(0.97);
         }
 
-        .home-summary {
-            background: hsl(142, 71%, 97%);
-            border: 1px solid hsl(142, 50%, 88%);
-            border-radius: var(--radius);
-            padding: 0.75rem 0.875rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .home-summary-name {
-            font-size: 0.9375rem;
-            font-weight: 600;
-            margin-bottom: 0.125rem;
-        }
-
-        .home-summary-location {
-            font-size: 0.8125rem;
-            color: var(--ios-gray);
-            line-height: 1.4;
-        }
-
-        .home-summary-location.empty {
-            font-style: italic;
-            opacity: 0.85;
-        }
-
         [hidden] {
             display: none !important;
         }
@@ -469,10 +444,6 @@
 
         .home-edit-form.is-editing #addHomeBtn:not(.hidden) {
             display: flex !important;
-        }
-
-        .home-summary.hidden {
-            display: none;
         }
 
         .home-edit-btn.hidden {
@@ -1824,11 +1795,6 @@
                 border-color: hsl(142, 50%, 40%);
             }
 
-            .home-summary {
-                background: hsl(142, 30%, 15%);
-                border-color: hsl(142, 30%, 28%);
-            }
-
             .home-edit-btn {
                 background: hsl(240, 10%, 22%);
                 border-color: hsl(207, 50%, 35%);
@@ -2266,10 +2232,6 @@
                                 </button>
                             </div>
                             <div id="homeSwitcher" class="home-switcher" role="tablist" aria-label="Accommodation locations"></div>
-                            <div id="homeSummary" class="home-summary">
-                                <div id="homeSummaryName" class="home-summary-name">我的電器庫</div>
-                                <div id="homeSummaryLocation" class="home-summary-location empty">未設定地點 · No location set</div>
-                            </div>
                             <div id="homeEditForm" class="home-edit-form" hidden>
                                 <div class="input-group">
                                     <label for="homeLibraryName" class="label">電器庫名稱 Library Name</label>
@@ -3526,9 +3488,6 @@
                     saveApplianceTitle: document.getElementById('saveApplianceTitle'),
                     appliancesCardTitle: document.getElementById('appliancesCardTitle'),
                     homeSwitcher: document.getElementById('homeSwitcher'),
-                    homeSummary: document.getElementById('homeSummary'),
-                    homeSummaryName: document.getElementById('homeSummaryName'),
-                    homeSummaryLocation: document.getElementById('homeSummaryLocation'),
                     homeEditForm: document.getElementById('homeEditForm'),
                     editHomeSettingsBtn: document.getElementById('editHomeSettingsBtn'),
                     homeLibraryName: document.getElementById('homeLibraryName'),
@@ -4279,19 +4238,6 @@
                 if (this.elements.deleteHomeBtn) {
                     this.elements.deleteHomeBtn.classList.toggle('hidden', this.homeStore.getHomes().length <= 1);
                 }
-                this.updateHomeSummary(home);
-            }
-
-            updateHomeSummary(home = this.getActiveHome()) {
-                if (!home) return;
-                const location = home.location?.trim();
-                if (this.elements.homeSummaryName) {
-                    this.elements.homeSummaryName.textContent = home.libraryName || '我的電器庫';
-                }
-                if (this.elements.homeSummaryLocation) {
-                    this.elements.homeSummaryLocation.textContent = location || '未設定地點 · No location set';
-                    this.elements.homeSummaryLocation.classList.toggle('empty', !location);
-                }
             }
 
             setHomeSettingsEditMode(editing) {
@@ -4305,7 +4251,6 @@
                         form.setAttribute('hidden', '');
                     }
                 }
-                this.elements.homeSummary?.classList.toggle('hidden', editing);
                 this.elements.editHomeSettingsBtn?.classList.toggle('hidden', editing);
                 this.elements.addHomeBtn?.classList.toggle('hidden', !editing);
                 if (editing) {
