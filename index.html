@@ -768,7 +768,8 @@
         }
 
         .rate-presets,
-        .usage-presets {
+        .usage-presets,
+        .appliance-presets {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
@@ -776,7 +777,8 @@
         }
 
         .rate-chip,
-        .usage-chip {
+        .usage-chip,
+        .appliance-chip {
             padding: 0.5rem 0.75rem;
             border-radius: 999px;
             border: 1px solid hsl(20, 5.9%, 90%);
@@ -791,12 +793,14 @@
         }
 
         .rate-chip:active,
-        .usage-chip:active {
+        .usage-chip:active,
+        .appliance-chip:active {
             transform: scale(0.97);
         }
 
         .rate-chip.active,
-        .usage-chip.active {
+        .usage-chip.active,
+        .appliance-chip.active {
             background: var(--ios-blue);
             border-color: var(--ios-blue);
             color: white;
@@ -1133,14 +1137,16 @@
             }
 
             .rate-chip,
-            .usage-chip {
+            .usage-chip,
+            .appliance-chip {
                 background: hsl(240, 10%, 20%);
                 border-color: hsl(240, 10%, 30%);
                 color: hsl(0, 0%, 90%);
             }
 
             .rate-chip.active,
-            .usage-chip.active {
+            .usage-chip.active,
+            .appliance-chip.active {
                 background: var(--ios-blue);
                 border-color: var(--ios-blue);
             }
@@ -1312,7 +1318,7 @@
                     <div class="card-content">
                         <!-- Usage Hours Input -->
                         <div class="input-group">
-                            <label for="usageHours" class="label">
+                            <label for="usageHours" class="label" id="usageHoursLabel">
                                 年使用小時 Annual Usage Hours
                             </label>
                             <div class="input-wrapper">
@@ -1326,7 +1332,7 @@
                                     min="1"
                                     enterkeyhint="next"
                                 />
-                                <span class="input-unit">小時 hrs</span>
+                                <span id="usageHoursUnit" class="input-unit">小時 hrs</span>
                             </div>
                             <div class="usage-presets" role="group" aria-label="Usage hours presets">
                                 <button type="button" class="usage-chip active" data-hours="8760" data-preset="yearly-247" title="365 days × 24 hours">全年 24/7</button>
@@ -1337,7 +1343,14 @@
                                 <button type="button" class="usage-chip" data-hours="552" data-preset="winter-q" title="Dec–Feb, 6 hours/day × 92 days">冬季季度 Winter</button>
                                 <button type="button" class="usage-chip" data-hours="832" data-preset="weekend" title="52 weekends × 16 hours">週末 Weekend</button>
                             </div>
-                            <p class="helper-text">選擇預設或自行輸入全年實際運作時數 · Pick a preset or enter your annual running hours</p>
+                            <p id="usageHoursHelper" class="helper-text">選擇預設或自行輸入全年實際運作時數 · Pick a preset or enter your annual running hours</p>
+                        </div>
+
+                        <!-- Appliance Type -->
+                        <div class="input-group">
+                            <span class="label" id="applianceTypeLabel">電器類型 Appliance Type</span>
+                            <div id="appliancePresets" class="appliance-presets" role="group" aria-labelledby="applianceTypeLabel"></div>
+                            <p id="applianceRatedNote" class="helper-text">選擇電器以套用機電署 MEELS 標準測試基準 · Select appliance for EMSD standard test basis</p>
                         </div>
 
                         <!-- Default Hours Input -->
@@ -1351,14 +1364,14 @@
                                     type="number"
                                     inputmode="numeric"
                                     class="input"
-                                    placeholder="1200"
-                                    value="1200"
+                                    placeholder="8760"
+                                    value="8760"
                                     min="1"
                                     enterkeyhint="next"
                                 />
-                                <span class="input-unit">小時 hrs</span>
+                                <span id="defaultHoursUnit" class="input-unit">小時 hrs</span>
                             </div>
-                            <p class="helper-text">能源標籤上的標準測試時數（常見 1,200 小時）· Standard test hours on energy label</p>
+                            <p id="defaultHoursHelper" class="helper-text">標籤年耗電量所依據的標準運作基準 · Reference operating basis for label annual kWh</p>
                         </div>
 
                         <!-- kWh Consumption Input -->
@@ -1380,7 +1393,7 @@
                                 />
                                 <span class="input-unit">kWh</span>
                             </div>
-                            <p class="helper-text">在標籤額定小時下的年耗電量 · Annual kWh at label rated hours</p>
+                            <p class="helper-text">能源標籤上的年耗電量（1 kWh = 1 度電）· Annual kWh on label (1 kWh = 1 unit on bill)</p>
                         </div>
 
                         <!-- Cost per kWh Input -->
@@ -1433,7 +1446,8 @@
                                 <h3 class="info-title">使用說明 Usage Instructions</h3>
                                 <ul class="info-list">
                                     <li>• 輸入電器全年實際運作小時數</li>
-                                    <li>• 標籤額定小時和用電量取自能源標籤</li>
+                                    <li>• 選擇電器類型以套用正確的標籤額定小時（MEELS 標準）</li>
+                                    <li>• 標籤用電量取自能源標籤（1 kWh = 1 度電）</li>
                                     <li>• 選擇電價預設或自行輸入每度電費用</li>
                                     <li>• 完成後點擊「查看結果」進入結果頁</li>
                                 </ul>
@@ -1663,16 +1677,107 @@
             }
         }
 
-        const PRODUCT_TYPE_LABELS = {
-            room_ac: '冷氣機 AC',
-            refrigerator: '雪櫃 Refrigerator',
-            washing: '洗衣機 Washer',
-            dehumidifier: '抽濕機 Dehumidifier',
-            tv: '電視 TV',
-            water_heater: '熱水器 Water Heater',
-            led_lamp: 'LED 燈 LED Lamp',
-            unknown: '未能識別 Unknown'
+        // HK MEELS standard reference operating basis (機電署《產品能源標籤實務守則》)
+        const APPLIANCE_CATALOG = {
+            room_ac: {
+                label: '冷氣機 AC',
+                labelRatedHours: 1136,
+                ratedNote: 'MEELS 標準：全年製冷運作 1,136 小時 · EMSD: 1,136 cooling hrs/yr',
+                defaultHoursHelper: '標籤年耗電量以全年 1,136 小時製冷運作計算',
+                suggestedUsageHours: 1104,
+                usageIsCycles: false,
+                ocrRegex: /冷氣|空調|room\s*air|air\s*condition/i
+            },
+            refrigerator: {
+                label: '雪櫃 Refrigerator',
+                labelRatedHours: 8760,
+                ratedNote: 'MEELS 標準：全年 24 小時運作（8,760 小時）· Full-year 24/7 operation',
+                defaultHoursHelper: '標籤年耗電量以全年不間斷運作計算',
+                suggestedUsageHours: 8760,
+                usageIsCycles: false,
+                ocrRegex: /雪櫃|冰箱|refrigerat/i
+            },
+            washing: {
+                label: '洗衣機 Washer',
+                labelRatedHours: 365,
+                ratedNote: 'MEELS 標準：每年 365 次洗衣程序 · EMSD: 365 cycles/yr',
+                defaultHoursHelper: '標籤年耗電量以每年 365 次標準洗衣計算；下方「年使用」請填實際次數',
+                suggestedUsageHours: 365,
+                usageIsCycles: true,
+                usageLabel: '年使用次數 Annual Uses',
+                usageUnit: '次 uses',
+                usageHelper: '輸入全年實際洗衣次數（標籤基準為 365 次）· Enter annual wash cycles',
+                ocrRegex: /洗衣|washing\s*machine/i
+            },
+            dehumidifier: {
+                label: '抽濕機 Dehumidifier',
+                labelRatedHours: 450,
+                ratedNote: 'MEELS 標準：全年 450 小時運作 · EMSD: 450 hrs/yr',
+                defaultHoursHelper: '標籤年耗電量以全年 450 小時標準運作計算',
+                suggestedUsageHours: 552,
+                usageIsCycles: false,
+                ocrRegex: /抽濕|除濕|dehumid/i
+            },
+            tv: {
+                label: '電視 TV',
+                labelRatedHours: 1460,
+                ratedNote: 'MEELS 標準：每日 4 小時 × 365 日 · EMSD: 4 hrs/day × 365 days',
+                defaultHoursHelper: '標籤年耗電量以每日 4 小時、全年 1,460 小時計算',
+                suggestedUsageHours: 1460,
+                usageIsCycles: false,
+                ocrRegex: /電視|television|\btv\b/i
+            },
+            water_heater: {
+                label: '儲水式熱水爐 Water Heater',
+                labelRatedHours: 8760,
+                ratedNote: 'MEELS 標準：全年待機及標準用水模式 · Full-year standby pattern',
+                defaultHoursHelper: '標籤年耗電量以全年標準待機及用水模式計算',
+                suggestedUsageHours: 8760,
+                usageIsCycles: false,
+                ocrRegex: /熱水|water\s*heat/i
+            },
+            induction: {
+                label: '電磁爐 Induction',
+                labelRatedHours: 365,
+                ratedNote: 'MEELS 標準：全年 365 小時運作 · EMSD: ~1 hr/day × 365 days',
+                defaultHoursHelper: '標籤年耗電量以全年 365 小時標準烹調運作計算',
+                suggestedUsageHours: 365,
+                usageIsCycles: false,
+                ocrRegex: /電磁|induction/i
+            },
+            led_lamp: {
+                label: 'LED 燈 LED Lamp',
+                labelRatedHours: 1095,
+                ratedNote: 'MEELS 標準：每日 3 小時 × 365 日 · EMSD: 3 hrs/day × 365 days',
+                defaultHoursHelper: '標籤年耗電量以每日 3 小時、全年 1,095 小時計算',
+                suggestedUsageHours: 1095,
+                usageIsCycles: false,
+                ocrRegex: /LED|燈飾|燈泡|lamp/i
+            },
+            cfl: {
+                label: '慳電膽 CFL',
+                labelRatedHours: 1095,
+                ratedNote: 'MEELS 標準：每日 3 小時 × 365 日 · EMSD: 3 hrs/day × 365 days',
+                defaultHoursHelper: '標籤年耗電量以每日 3 小時、全年 1,095 小時計算',
+                suggestedUsageHours: 1095,
+                usageIsCycles: false,
+                ocrRegex: /慳電|螢光|compact\s*fluorescent|cfl/i
+            },
+            custom: {
+                label: '其他/手動 Custom',
+                labelRatedHours: 1200,
+                ratedNote: '手動輸入標籤額定小時 · Enter rated hours manually',
+                defaultHoursHelper: '請按能源標籤或說明書輸入標準測試基準',
+                suggestedUsageHours: null,
+                usageIsCycles: false,
+                ocrRegex: null
+            }
         };
+
+        const APPLIANCE_ORDER = [
+            'refrigerator', 'room_ac', 'washing', 'tv', 'dehumidifier',
+            'water_heater', 'induction', 'led_lamp', 'cfl', 'custom'
+        ];
 
         class EnergyLabelParser {
             static normalize(text) {
@@ -1768,22 +1873,13 @@
                     rawText: text
                 };
 
-                const productPatterns = [
-                    { type: 'room_ac', regex: /冷氣|空調|room\s*air|air\s*condition/i, hours: 1104 },
-                    { type: 'refrigerator', regex: /雪櫃|冰箱|refrigerat/i, hours: 8760 },
-                    { type: 'washing', regex: /洗衣|washing\s*machine/i, hours: 292 },
-                    { type: 'dehumidifier', regex: /抽濕|除濕|dehumid/i, hours: 552 },
-                    { type: 'tv', regex: /電視|television|\btv\b/i, hours: 1460 },
-                    { type: 'water_heater', regex: /熱水|water\s*heat/i, hours: 8760 },
-                    { type: 'led_lamp', regex: /LED|燈飾|燈泡|lamp/i, hours: 1460 }
-                ];
-
-                for (const pattern of productPatterns) {
-                    if (pattern.regex.test(normalized)) {
-                        result.productType = pattern.type;
-                        result.suggestedUsageHours = pattern.hours;
-                        break;
-                    }
+                for (const typeId of APPLIANCE_ORDER) {
+                    const spec = APPLIANCE_CATALOG[typeId];
+                    if (!spec?.ocrRegex?.test(normalized)) continue;
+                    result.productType = typeId;
+                    result.defaultHours = spec.labelRatedHours;
+                    result.suggestedUsageHours = spec.suggestedUsageHours;
+                    break;
                 }
 
                 const gradeMatch = normalized.match(/(?:能源效益|efficiency)\s*(?:級|grade)?\s*[:：]?\s*([1-5])\s*(?:級|grade)?/i)
@@ -1807,7 +1903,12 @@
                         }
                     }
                 }
-                if (!result.defaultHours) result.defaultHours = 1200;
+                if (!result.defaultHours) {
+                    const fallbackType = result.productType && APPLIANCE_CATALOG[result.productType]
+                        ? result.productType
+                        : 'custom';
+                    result.defaultHours = APPLIANCE_CATALOG[fallbackType].labelRatedHours;
+                }
 
                 if (result.kWh) {
                     const topScore = this.collectKwhCandidates(normalized, lines)
@@ -2008,9 +2109,10 @@
         // Main Calculator Class with Bug Fixes
         class ElectricityCalculator {
             constructor() {
+                this.selectedAppliance = 'refrigerator';
                 this.inputs = {
                     usageHours: 8760,
-                    defaultHours: 1200,
+                    defaultHours: APPLIANCE_CATALOG.refrigerator.labelRatedHours,
                     kWh: 265,
                     costPerKWh: 1.406
                 };
@@ -2023,6 +2125,8 @@
                 this.currentStep = 1;
                 
                 this.initializeElements();
+                this.renderApplianceChips();
+                this.applyApplianceType(this.selectedAppliance, false);
                 this.attachEventListeners();
                 this.loadClpTariff();
             }
@@ -2071,8 +2175,71 @@
                     scanHoursValue: document.getElementById('scanHoursValue'),
                     scanTypeValue: document.getElementById('scanTypeValue'),
                     scanConfidence: document.getElementById('scanConfidence'),
-                    scanApplyBtn: document.getElementById('scanApplyBtn')
+                    scanApplyBtn: document.getElementById('scanApplyBtn'),
+                    appliancePresets: document.getElementById('appliancePresets'),
+                    applianceRatedNote: document.getElementById('applianceRatedNote'),
+                    defaultHoursHelper: document.getElementById('defaultHoursHelper'),
+                    defaultHoursUnit: document.getElementById('defaultHoursUnit'),
+                    usageHoursLabel: document.getElementById('usageHoursLabel'),
+                    usageHoursUnit: document.getElementById('usageHoursUnit'),
+                    usageHoursHelper: document.getElementById('usageHoursHelper')
                 };
+            }
+
+            renderApplianceChips() {
+                const container = this.elements.appliancePresets;
+                if (!container) return;
+                container.innerHTML = '';
+                APPLIANCE_ORDER.forEach((typeId) => {
+                    const spec = APPLIANCE_CATALOG[typeId];
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'appliance-chip rate-chip';
+                    btn.dataset.appliance = typeId;
+                    btn.textContent = spec.label;
+                    if (typeId === this.selectedAppliance) btn.classList.add('active');
+                    btn.addEventListener('click', () => this.applyApplianceType(typeId));
+                    container.appendChild(btn);
+                });
+            }
+
+            applyApplianceType(typeId, updateUsage = true) {
+                const spec = APPLIANCE_CATALOG[typeId] || APPLIANCE_CATALOG.custom;
+                this.selectedAppliance = typeId;
+
+                this.elements.appliancePresets?.querySelectorAll('.appliance-chip').forEach((chip) => {
+                    chip.classList.toggle('active', chip.dataset.appliance === typeId);
+                });
+
+                if (this.elements.defaultHours) {
+                    this.elements.defaultHours.value = spec.labelRatedHours;
+                }
+                if (this.elements.applianceRatedNote) {
+                    this.elements.applianceRatedNote.textContent = spec.ratedNote;
+                }
+                if (this.elements.defaultHoursHelper) {
+                    this.elements.defaultHoursHelper.textContent = spec.defaultHoursHelper;
+                }
+                if (this.elements.defaultHoursUnit) {
+                    this.elements.defaultHoursUnit.textContent = spec.usageIsCycles ? '次 uses' : '小時 hrs';
+                }
+
+                const usageLabel = document.querySelector('label[for="usageHours"]');
+                if (usageLabel) {
+                    usageLabel.textContent = spec.usageLabel || '年使用小時 Annual Usage Hours';
+                }
+                if (this.elements.usageHoursUnit) {
+                    this.elements.usageHoursUnit.textContent = spec.usageUnit || '小時 hrs';
+                }
+                if (this.elements.usageHoursHelper) {
+                    this.elements.usageHoursHelper.textContent = spec.usageHelper
+                        || '選擇預設或自行輸入全年實際運作時數 · Pick a preset or enter your annual running hours';
+                }
+
+                if (updateUsage && spec.suggestedUsageHours != null && this.elements.usageHours) {
+                    this.elements.usageHours.value = spec.suggestedUsageHours;
+                    this.syncUsageChips(spec.suggestedUsageHours);
+                }
             }
 
             attachEventListeners() {
@@ -2193,8 +2360,8 @@
                         : '—';
                 }
                 if (this.elements.scanTypeValue) {
-                    const typeKey = parsed.productType || 'unknown';
-                    this.elements.scanTypeValue.textContent = PRODUCT_TYPE_LABELS[typeKey] || PRODUCT_TYPE_LABELS.unknown;
+                    const typeKey = parsed.productType || 'custom';
+                    this.elements.scanTypeValue.textContent = APPLIANCE_CATALOG[typeKey]?.label || APPLIANCE_CATALOG.custom.label;
                 }
                 if (this.elements.scanConfidence) {
                     const engineLabel = parsed.engine === 'mlkit'
@@ -2224,6 +2391,9 @@
             }
 
             applyParsedLabel(parsed) {
+                if (parsed.productType && APPLIANCE_CATALOG[parsed.productType]) {
+                    this.applyApplianceType(parsed.productType, false);
+                }
                 if (this.elements.kWh && parsed.kWh != null) {
                     this.elements.kWh.value = parsed.kWh;
                 }
