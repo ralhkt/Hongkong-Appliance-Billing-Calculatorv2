@@ -451,7 +451,19 @@
             opacity: 0.85;
         }
 
-        .home-edit-form.hidden {
+        .home-edit-form {
+            display: none;
+        }
+
+        .home-edit-form.is-editing {
+            display: block;
+        }
+
+        .home-summary.hidden {
+            display: none;
+        }
+
+        .home-edit-btn.hidden {
             display: none;
         }
 
@@ -2039,7 +2051,7 @@
                                 <div id="homeSummaryName" class="home-summary-name">我的電器庫</div>
                                 <div id="homeSummaryLocation" class="home-summary-location empty">未設定地點 · No location set</div>
                             </div>
-                            <div id="homeEditForm" class="home-edit-form hidden">
+                            <div id="homeEditForm" class="home-edit-form" hidden>
                                 <div class="input-group">
                                     <label for="homeLibraryName" class="label">電器庫名稱 Library Name</label>
                                     <input id="homeLibraryName" class="input" type="text" placeholder="例如：我的家、租屋、父母家" maxlength="30" enterkeyhint="done" />
@@ -3908,6 +3920,7 @@
 
             openMyAppliances() {
                 this.hideError();
+                this.homeSettingsEditing = false;
                 try {
                     this.showStep(3);
                 } catch (err) {
@@ -3989,12 +4002,20 @@
 
             setHomeSettingsEditMode(editing) {
                 this.homeSettingsEditing = editing;
-                this.elements.homeEditForm?.classList.toggle('hidden', !editing);
+                const form = this.elements.homeEditForm;
+                if (form) {
+                    form.classList.toggle('is-editing', editing);
+                    if (editing) {
+                        form.removeAttribute('hidden');
+                    } else {
+                        form.setAttribute('hidden', '');
+                    }
+                }
                 this.elements.homeSummary?.classList.toggle('hidden', editing);
                 this.elements.editHomeSettingsBtn?.classList.toggle('hidden', editing);
                 if (editing) {
                     this.fillHomeSettingsForm();
-                    this.elements.homeLibraryName?.focus();
+                    requestAnimationFrame(() => this.elements.homeLibraryName?.focus());
                 }
             }
 
@@ -4303,6 +4324,10 @@
             }
 
             showStep(step) {
+                if (this.currentStep === 3 && step !== 3) {
+                    this.homeSettingsEditing = false;
+                }
+
                 this.currentStep = step;
                 const isInput = step === 1;
                 const isResults = step === 2;
@@ -4339,6 +4364,7 @@
                 if (isAppliances) {
                     try {
                         this.syncActiveHomeUI();
+                        this.setHomeSettingsEditMode(this.homeSettingsEditing);
                         this.renderSavedAppliances();
                     } catch (err) {
                         console.error('Appliances view error', err);
