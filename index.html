@@ -632,6 +632,10 @@
             min-width: 8rem;
             padding: 0.75rem 1rem;
             border: 1px solid hsl(207, 100%, 75%);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+            z-index: 3;
             border-radius: var(--radius);
             background: white;
             color: var(--ios-blue);
@@ -2961,8 +2965,12 @@
 
             getCloudPlugin() {
                 if (!window.Capacitor?.isNativePlatform?.()) return null;
-                if (!this.cloudPlugin) {
-                    this.cloudPlugin = window.Capacitor.registerPlugin('ICloudSync');
+                if (!this.cloudPlugin && window.Capacitor?.isPluginAvailable?.('ICloudSync')) {
+                    try {
+                        this.cloudPlugin = window.Capacitor.registerPlugin('ICloudSync');
+                    } catch {
+                        this.cloudPlugin = null;
+                    }
                 }
                 return this.cloudPlugin;
             }
@@ -3653,8 +3661,11 @@
                     this.householdProvider = this.homeStore.getActiveHome()?.provider || 'clp';
                     this.renderAppliancePicker();
                     this.applyApplianceType(this.selectedAppliance, false);
-                    this.configureScanPickers();
                     this.syncActiveHomeUI();
+                    this.configureScanPickers();
+                    if (this.isNativeApp()) {
+                        requestAnimationFrame(() => this.configureScanPickers());
+                    }
                     this.setHomeSettingsEditMode(false);
                     this.updateSavedBadge();
                     this.loadClpTariff();
@@ -4072,16 +4083,33 @@
                 document.getElementById('scanCard')?.addEventListener('touchstart', warmupOCR, { passive: true, once: true });
                 document.getElementById('scanCard')?.addEventListener('mouseenter', warmupOCR, { once: true });
 
-                this.elements.scanCameraBtn?.addEventListener('click', (e) => {
-                    if (!this.isNativeApp()) return;
-                    e.preventDefault();
-                    this.pickScanImage('camera');
-                });
-                this.elements.scanAlbumBtn?.addEventListener('click', (e) => {
-                    if (!this.isNativeApp()) return;
-                    e.preventDefault();
-                    this.pickScanImage('album');
-                });
+                const bindScanTrigger = (btn, source, input) => {
+                    if (!btn) return;
+                    const handler = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        warmupOCR();
+                        if (this.isNativeApp()) {
+                            this.pickScanImage(source);
+                        } else {
+                            input?.click();
+                        }
+                    };
+                    btn.addEventListener('click', handler);
+                    btn.addEventListener('touchend', handler, { passive: false });
+                };
+
+                bindScanTrigger(
+                    this.elements.scanCameraBtn,
+                    'camera',
+                    this.elements.scanCameraInput
+                );
+                bindScanTrigger(
+                    this.elements.scanAlbumBtn,
+                    'album',
+                    this.elements.scanAlbumInput
+                );
+
                 this.elements.scanCameraInput?.addEventListener('change', (e) => {
                     warmupOCR();
                     this.handleScanFile(e.target.files?.[0]);
@@ -4102,16 +4130,21 @@
             }
 
             getCameraPlugin() {
-                if (!this.isNativeApp()) return null;
+                if (!this.isNativeApp() || !window.Capacitor) return null;
                 if (!this.cameraPlugin) {
-                    this.cameraPlugin = window.Capacitor.Plugins?.Camera
-                        || window.Capacitor.registerPlugin?.('Camera');
+                    if (window.Capacitor.isPluginAvailable?.('Camera')) {
+                        this.cameraPlugin = window.Capacitor.Plugins?.Camera
+                            || window.Capacitor.registerPlugin('Camera');
+                    } else if (window.Capacitor.registerPlugin) {
+                        this.cameraPlugin = window.Capacitor.registerPlugin('Camera');
+                    }
                 }
-                return this.cameraPlugin;
+                return this.cameraPlugin?.getPhoto ? this.cameraPlugin : null;
             }
 
             configureScanPickers() {
-                const mode = this.isNativeApp() ? 'native-picker' : 'web-picker';
+                const useNativeCamera = this.isNativeApp() && Boolean(this.getCameraPlugin());
+                const mode = useNativeCamera ? 'native-picker' : 'web-picker';
                 [this.elements.scanCameraWrap, this.elements.scanAlbumWrap].forEach((wrap) => {
                     if (!wrap) return;
                     wrap.classList.remove('native-picker', 'web-picker');
@@ -4138,18 +4171,34 @@
                 this.labelOCRService.warmup();
 
                 const Camera = this.getCameraPlugin();
-                if (!Camera?.getPhoto) {
+                if (!Camera) {
+                    this.configureScanPickers();
                     const input = source === 'camera'
                         ? this.elements.scanCameraInput
                         : this.elements.scanAlbumInput;
-                    input?.click();
+                    if (!this.isNativeApp() && input) {
+                        input.click();
+                        return;
+                    }
+                    const label = source === 'camera' ? '相機 Camera' : '相簿 Album';
+                    this.showError(`無法開啟${label} · Camera plugin unavailable`, { stayOnStep: true });
                     return;
                 }
 
                 try {
                     const permissionType = source === 'camera' ? 'camera' : 'photos';
-                    if (Camera.requestPermissions) {
-                        await Camera.requestPermissions({ permissions: [permissionType] });
+                    if (Camera.checkPermissions) {
+                        const status = await Camera.checkPermissions();
+                        const current = status?.[permissionType] || status?.photos;
+                        if (current === 'denied' && Camera.requestPermissions) {
+                            await Camera.requestPermissions(
+                                source === 'camera' ? { permissions: ['camera'] } : { permissions: ['photos'] }
+                            );
+                        }
+                    } else if (Camera.requestPermissions) {
+                        await Camera.requestPermissions(
+                            source === 'camera' ? { permissions: ['camera'] } : { permissions: ['photos'] }
+                        );
                     }
 
                     const photo = await Camera.getPhoto({
@@ -4157,7 +4206,9 @@
                         allowEditing: false,
                         resultType: 'dataUrl',
                         source: source === 'camera' ? 'CAMERA' : 'PHOTOS',
-                        correctOrientation: true
+                        correctOrientation: true,
+                        presentationStyle: 'fullscreen',
+                        saveToGallery: false
                     });
 
                     if (!photo?.dataUrl) return;
@@ -4166,7 +4217,7 @@
                 } catch (err) {
                     if (this.isScanPickerCancelled(err)) return;
                     const label = source === 'camera' ? '相機 Camera' : '相簿 Album';
-                    this.showError(`無法開啟${label} · Could not open picker (${err?.message || 'unknown error'})`);
+                    this.showError(`無法開啟${label} · Could not open picker (${err?.message || 'unknown error'})`, { stayOnStep: true });
                 }
             }
 
@@ -4231,15 +4282,21 @@
                     this.applyApplianceType(parsed.productType, false);
                 }
                 if (this.elements.kWh && parsed.kWh != null) {
-                    this.elements.kWh.value = parsed.kWh;
+                    this.elements.kWh.value = String(parsed.kWh);
+                    this.inputs.kWh = parsed.kWh;
                 }
                 if (this.elements.defaultHours && parsed.defaultHours != null) {
-                    this.elements.defaultHours.value = parsed.defaultHours;
+                    this.elements.defaultHours.value = String(parsed.defaultHours);
+                    this.inputs.defaultHours = parsed.defaultHours;
                 }
                 if (this.elements.usageHours && parsed.suggestedUsageHours != null) {
-                    this.elements.usageHours.value = parsed.suggestedUsageHours;
+                    this.elements.usageHours.value = String(parsed.suggestedUsageHours);
+                    this.inputs.usageHours = parsed.suggestedUsageHours;
                     this.syncUsageChips(parsed.suggestedUsageHours);
                 }
+                ['kWh', 'defaultHours', 'usageHours'].forEach((key) => {
+                    this.elements[key]?.dispatchEvent(new Event('input', { bubbles: true }));
+                });
             }
 
             applyPendingScan(goToResults = false) {
@@ -4287,9 +4344,9 @@
                     this.applyParsedLabel(parsed);
                     if (parsed.kWh != null) {
                         this.hideError();
-                        this.goToResults();
+                        requestAnimationFrame(() => this.goToResults());
                     } else {
-                        this.showError('未能讀取年耗電量，請對準標籤上的 kWh 數字後重試 · Could not read kWh — align the label number and retry');
+                        this.showError('未能讀取年耗電量，請對準標籤上的 kWh 數字後重試 · Could not read kWh — align the label number and retry', { stayOnStep: true });
                     }
                 } catch (err) {
                     this.showError(`標籤辨識失敗 · Label scan failed (${err.message})`);
@@ -4935,8 +4992,10 @@
                 this.showStep(2);
             }
 
-            showError(message) {
-                this.showStep(1);
+            showError(message, options = {}) {
+                if (!options.stayOnStep && this.currentStep !== 1) {
+                    this.showStep(1);
+                }
                 if (this.elements.errorMessage && this.elements.errorAlert) {
                     this.elements.errorMessage.textContent = message;
                     this.elements.errorAlert.classList.remove('hidden');
@@ -5026,7 +5085,10 @@
 
         // Initialize calculator when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            new ElectricityCalculator();
+            const calculator = new ElectricityCalculator();
+            if (window.Capacitor?.isNativePlatform?.()) {
+                window.addEventListener('focus', () => calculator.configureScanPickers(), { passive: true });
+            }
         });
 
         // Android / Chrome install prompt (not supported on iOS Safari)
