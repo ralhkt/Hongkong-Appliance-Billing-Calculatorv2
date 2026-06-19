@@ -289,6 +289,63 @@
             padding-right: 3.25rem;
         }
 
+        /* Composite input: prefix | field | suffix — no absolute overlap */
+        .input-composite {
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            border: 1px solid hsl(20, 5.9%, 90%);
+            border-radius: var(--radius);
+            background: white;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            min-height: var(--touch-target);
+        }
+
+        .input-composite:focus-within {
+            border-color: var(--ios-blue);
+            box-shadow: 0 0 0 2px hsla(207, 100%, 58%, 0.2);
+        }
+
+        .input-composite .input {
+            flex: 1;
+            min-width: 0;
+            width: auto;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0.875rem 0.625rem;
+        }
+
+        .input-composite .input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .input-addon {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            padding: 0 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--ios-gray);
+            background: hsl(0, 0%, 97%);
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .input-addon-prefix {
+            border-right: 1px solid hsl(20, 5.9%, 90%);
+        }
+
+        .input-addon-suffix {
+            border-left: 1px solid hsl(20, 5.9%, 90%);
+            font-size: 0.8125rem;
+        }
+
         /* Button Styles */
         .button {
             width: 100%;
@@ -1071,20 +1128,21 @@
                             <label for="costPerKWh" class="label">
                                 電價 Electricity Rate
                             </label>
-                            <div class="input-wrapper">
-                                <span class="input-prefix">HK$</span>
+                            <div class="input-composite" role="group" aria-label="Electricity rate per kWh">
+                                <span class="input-addon input-addon-prefix" aria-hidden="true">HK$</span>
                                 <input
                                     id="costPerKWh"
                                     type="number"
                                     inputmode="decimal"
-                                    class="input input-with-prefix"
+                                    class="input"
                                     placeholder="1.406"
                                     value="1.406"
                                     min="0"
                                     step="0.001"
                                     enterkeyhint="done"
+                                    aria-label="Electricity rate in HK dollars per kWh"
                                 />
-                                <span class="input-unit">/kWh</span>
+                                <span class="input-addon input-addon-suffix" aria-hidden="true">/kWh</span>
                             </div>
                             <div class="rate-presets" role="group" aria-label="Electricity rate presets">
                                 <button type="button" class="rate-chip active" data-provider="clp" id="clpRateChip">中電 CLP</button>
