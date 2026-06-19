@@ -451,12 +451,24 @@
             opacity: 0.85;
         }
 
+        [hidden] {
+            display: none !important;
+        }
+
         .home-edit-form {
-            display: none;
+            display: none !important;
         }
 
         .home-edit-form.is-editing {
-            display: block;
+            display: block !important;
+        }
+
+        #addHomeBtn {
+            display: none !important;
+        }
+
+        .home-edit-form.is-editing #addHomeBtn:not(.hidden) {
+            display: flex !important;
         }
 
         .home-summary.hidden {
@@ -2065,7 +2077,7 @@
                                     <button id="cancelHomeSettingsBtn" class="button button-outline" type="button">取消 Cancel</button>
                                     <button id="deleteHomeBtn" class="button button-outline home-delete-btn hidden" type="button">刪除此地點 Delete</button>
                                 </div>
-                                <button id="addHomeBtn" class="button button-outline" type="button" style="width: 100%; margin-top: 0.5rem;">新增地點 Add Place</button>
+                                <button id="addHomeBtn" class="button button-outline hidden" type="button" style="width: 100%; margin-top: 0.5rem;">新增地點 Add Place</button>
                             </div>
                         </div>
                         <div class="household-tariff-row">
@@ -3262,6 +3274,7 @@
                     this.applyApplianceType(this.selectedAppliance, false);
                     this.configureScanPickers();
                     this.syncActiveHomeUI();
+                    this.setHomeSettingsEditMode(false);
                     this.updateSavedBadge();
                     this.loadClpTariff();
                 } catch (err) {
@@ -4013,6 +4026,7 @@
                 }
                 this.elements.homeSummary?.classList.toggle('hidden', editing);
                 this.elements.editHomeSettingsBtn?.classList.toggle('hidden', editing);
+                this.elements.addHomeBtn?.classList.toggle('hidden', !editing);
                 if (editing) {
                     this.fillHomeSettingsForm();
                     requestAnimationFrame(() => this.elements.homeLibraryName?.focus());
@@ -4363,8 +4377,9 @@
 
                 if (isAppliances) {
                     try {
+                        this.homeSettingsEditing = false;
                         this.syncActiveHomeUI();
-                        this.setHomeSettingsEditMode(this.homeSettingsEditing);
+                        this.setHomeSettingsEditMode(false);
                         this.renderSavedAppliances();
                     } catch (err) {
                         console.error('Appliances view error', err);
