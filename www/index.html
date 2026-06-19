@@ -171,6 +171,176 @@
             font-weight: 500;
         }
 
+        /* Energy label scan */
+        .scan-card {
+            background: linear-gradient(135deg, hsl(207, 100%, 97%), hsl(207, 80%, 94%));
+            border: 1px solid hsl(207, 100%, 85%);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .scan-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.375rem;
+        }
+
+        .scan-desc {
+            font-size: 0.8125rem;
+            color: var(--ios-gray);
+            line-height: 1.45;
+            margin-bottom: 0.875rem;
+        }
+
+        .scan-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .scan-btn {
+            flex: 1;
+            min-width: 8rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid hsl(207, 100%, 75%);
+            border-radius: var(--radius);
+            background: white;
+            color: var(--ios-blue);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            min-height: var(--touch-target);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .scan-btn:active {
+            transform: scale(0.97);
+            background: hsl(207, 100%, 97%);
+        }
+
+        .scan-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .scan-btn-primary {
+            background: var(--ios-blue);
+            color: white;
+            border-color: var(--ios-blue);
+        }
+
+        .scan-btn-primary:active {
+            background: hsl(207, 100%, 50%);
+        }
+
+        .scan-status {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            font-size: 0.8125rem;
+            color: hsl(207, 100%, 30%);
+        }
+
+        .scan-status.visible {
+            display: flex;
+        }
+
+        .scan-spinner {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid hsl(207, 100%, 85%);
+            border-top-color: var(--ios-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .scan-preview {
+            display: none;
+            margin-top: 0.875rem;
+            padding-top: 0.875rem;
+            border-top: 1px solid hsl(207, 100%, 88%);
+        }
+
+        .scan-preview.visible {
+            display: block;
+        }
+
+        .scan-preview-layout {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .scan-thumb {
+            width: 4.5rem;
+            height: 4.5rem;
+            border-radius: 0.5rem;
+            object-fit: cover;
+            border: 1px solid hsl(207, 100%, 85%);
+            flex-shrink: 0;
+        }
+
+        .scan-fields {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.8125rem;
+            line-height: 1.5;
+        }
+
+        .scan-field-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        .scan-field-label {
+            color: var(--ios-gray);
+        }
+
+        .scan-field-value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .scan-confidence {
+            font-size: 0.75rem;
+            margin-top: 0.375rem;
+            color: var(--ios-gray);
+        }
+
+        .scan-confidence.high { color: var(--ios-green); }
+        .scan-confidence.medium { color: hsl(45, 100%, 35%); }
+        .scan-confidence.low { color: var(--ios-red); }
+
+        .scan-apply-row {
+            margin-top: 0.75rem;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
         /* Main Content — sole scroll region */
         .main {
             flex: 1;
@@ -998,6 +1168,26 @@
                 border-color: hsl(0, 40%, 30%);
                 color: hsl(0, 80%, 80%);
             }
+
+            .scan-card {
+                background: linear-gradient(135deg, hsl(207, 40%, 18%), hsl(207, 35%, 15%));
+                border-color: hsl(207, 40%, 28%);
+            }
+
+            .scan-btn {
+                background: hsl(240, 10%, 20%);
+                border-color: hsl(207, 40%, 35%);
+                color: hsl(207, 100%, 75%);
+            }
+
+            .scan-btn-primary {
+                background: var(--ios-blue);
+                color: white;
+            }
+
+            .scan-status {
+                color: hsl(207, 100%, 75%);
+            }
         }
     </style>
 </head>
@@ -1043,6 +1233,56 @@
 
             <!-- Step 1: Input -->
             <div id="stepInput" class="step-view active">
+                <div class="scan-card" id="scanCard">
+                    <div class="scan-title">
+                        <svg class="svg-icon text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        拍攝能源標籤 Scan Energy Label
+                    </div>
+                    <p class="scan-desc">拍攝香港強制性能源效益標籤，自動讀取年耗電量並計算電費 · Photograph the HK MEELS label to auto-fill kWh and show results</p>
+                    <div class="scan-actions">
+                        <button type="button" class="scan-btn scan-btn-primary" id="scanCameraBtn">
+                            <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            拍照 Take Photo
+                        </button>
+                        <button type="button" class="scan-btn" id="scanAlbumBtn">
+                            <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            相簿 Album
+                        </button>
+                    </div>
+                    <input type="file" id="scanCameraInput" class="sr-only" accept="image/*" capture="environment" />
+                    <input type="file" id="scanAlbumInput" class="sr-only" accept="image/*" />
+                    <div id="scanStatus" class="scan-status" role="status" aria-live="polite">
+                        <span class="scan-spinner" aria-hidden="true"></span>
+                        <span id="scanStatusText">辨識中… 0%</span>
+                    </div>
+                    <div id="scanPreview" class="scan-preview">
+                        <div class="scan-preview-layout">
+                            <img id="scanThumb" class="scan-thumb" alt="Label preview" />
+                            <div class="scan-fields">
+                                <div class="scan-field-row">
+                                    <span class="scan-field-label">年耗電量 kWh</span>
+                                    <span class="scan-field-value" id="scanKwhValue">—</span>
+                                </div>
+                                <div class="scan-field-row">
+                                    <span class="scan-field-label">標籤額定小時</span>
+                                    <span class="scan-field-value" id="scanHoursValue">—</span>
+                                </div>
+                                <div class="scan-field-row">
+                                    <span class="scan-field-label">電器類型</span>
+                                    <span class="scan-field-value" id="scanTypeValue">—</span>
+                                </div>
+                                <div id="scanConfidence" class="scan-confidence"></div>
+                            </div>
+                        </div>
+                        <div class="scan-apply-row">
+                            <button type="button" class="button" id="scanApplyBtn">
+                                <svg class="svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                確認並查看結果 Apply &amp; View Results
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="errorAlert" class="alert hidden">
                     <svg class="svg-icon text-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <div>
@@ -1413,6 +1653,205 @@
             }
         }
 
+        const PRODUCT_TYPE_LABELS = {
+            room_ac: '冷氣機 AC',
+            refrigerator: '雪櫃 Refrigerator',
+            washing: '洗衣機 Washer',
+            dehumidifier: '抽濕機 Dehumidifier',
+            tv: '電視 TV',
+            water_heater: '熱水器 Water Heater',
+            led_lamp: 'LED 燈 LED Lamp',
+            unknown: '未能識別 Unknown'
+        };
+
+        class EnergyLabelParser {
+            static normalize(text) {
+                return text
+                    .replace(/\r/g, '\n')
+                    .replace(/[，、]/g, ',')
+                    .replace(/[：]/g, ':')
+                    .replace(/[（(]\s*/g, '(')
+                    .replace(/\s*[）)]/g, ')')
+                    .replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+                    .replace(/[．]/g, '.');
+            }
+
+            static parse(text) {
+                const normalized = this.normalize(text);
+                const result = {
+                    kWh: null,
+                    defaultHours: null,
+                    productType: null,
+                    suggestedUsageHours: null,
+                    grade: null,
+                    confidence: 'low',
+                    rawText: text
+                };
+
+                const productPatterns = [
+                    { type: 'room_ac', regex: /冷氣|空調|room\s*air|air\s*condition/i, hours: 1104 },
+                    { type: 'refrigerator', regex: /雪櫃|冰箱|refrigerat/i, hours: 8760 },
+                    { type: 'washing', regex: /洗衣|washing\s*machine/i, hours: 292 },
+                    { type: 'dehumidifier', regex: /抽濕|除濕|dehumid/i, hours: 552 },
+                    { type: 'tv', regex: /電視|television|\btv\b/i, hours: 1460 },
+                    { type: 'water_heater', regex: /熱水|water\s*heat/i, hours: 8760 },
+                    { type: 'led_lamp', regex: /LED|燈飾|燈泡|lamp/i, hours: 1460 }
+                ];
+
+                for (const pattern of productPatterns) {
+                    if (pattern.regex.test(normalized)) {
+                        result.productType = pattern.type;
+                        result.suggestedUsageHours = pattern.hours;
+                        break;
+                    }
+                }
+
+                const gradeMatch = normalized.match(/(?:能源效益|efficiency)\s*(?:級|grade)?\s*[:：]?\s*([1-5])\s*(?:級|grade)?/i)
+                    || normalized.match(/\b([1-5])\s*(?:級|grade)\b/i);
+                if (gradeMatch) {
+                    result.grade = parseInt(gradeMatch[1], 10);
+                }
+
+                const kwhPatterns = [
+                    /年耗電量[^0-9]{0,24}(\d{1,4}(?:\.\d+)?)\s*k?\s*wh/i,
+                    /annual\s*energy\s*consumption[^0-9]{0,24}(\d{1,4}(?:\.\d+)?)/i,
+                    /每年耗電[^0-9]{0,20}(\d{1,4}(?:\.\d+)?)/i,
+                    /耗電量[^0-9]{0,16}(\d{1,4}(?:\.\d+)?)\s*k?\s*wh/i,
+                    /(\d{1,4}(?:\.\d+)?)\s*kwh/i,
+                    /(\d{1,4}(?:\.\d+)?)\s*千瓦時/i
+                ];
+
+                for (const pattern of kwhPatterns) {
+                    const match = normalized.match(pattern);
+                    if (match) {
+                        const value = parseFloat(match[1]);
+                        if (value > 0 && value < 50000) {
+                            result.kWh = value;
+                            break;
+                        }
+                    }
+                }
+
+                if (!result.kWh) {
+                    const lines = normalized.split('\n');
+                    for (const line of lines) {
+                        if (/耗電|energy|kwh|千瓦/i.test(line)) {
+                            const numbers = line.match(/\d{2,4}(?:\.\d+)?/g);
+                            if (numbers) {
+                                const candidate = parseFloat(numbers[numbers.length - 1]);
+                                if (candidate >= 10 && candidate < 20000) {
+                                    result.kWh = candidate;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                const hourPatterns = [
+                    /(\d{3,4})\s*(?:小時|hours?|hrs?)/i,
+                    /額定[^0-9]{0,20}(\d{3,4})/i,
+                    /rated[^0-9]{0,20}(\d{3,4})/i,
+                    /(?:test|測試)[^0-9]{0,20}(\d{3,4})/i
+                ];
+
+                for (const pattern of hourPatterns) {
+                    const match = normalized.match(pattern);
+                    if (match) {
+                        const value = parseInt(match[1], 10);
+                        if (value >= 100 && value <= 8760) {
+                            result.defaultHours = value;
+                            break;
+                        }
+                    }
+                }
+
+                if (!result.defaultHours) {
+                    result.defaultHours = 1200;
+                }
+
+                if (result.kWh) {
+                    const hasKeyword = /kwh|千瓦|耗電|energy/i.test(normalized);
+                    result.confidence = hasKeyword ? 'high' : 'medium';
+                }
+
+                return result;
+            }
+        }
+
+        class LabelOCRService {
+            constructor() {
+                this.worker = null;
+                this.workerPromise = null;
+            }
+
+            async loadTesseract() {
+                if (window.Tesseract) return;
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                    script.async = true;
+                    script.onload = resolve;
+                    script.onerror = () => reject(new Error('Failed to load OCR engine'));
+                    document.head.appendChild(script);
+                });
+            }
+
+            async ensureWorker() {
+                if (this.worker) return this.worker;
+                if (!this.workerPromise) {
+                    this.workerPromise = (async () => {
+                        await this.loadTesseract();
+                        const worker = await Tesseract.createWorker('chi_tra+eng', 1, {
+                            logger: () => {}
+                        });
+                        this.worker = worker;
+                        return worker;
+                    })();
+                }
+                return this.workerPromise;
+            }
+
+            async preprocessImage(file) {
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => reject(new Error('Unable to read image'));
+                    reader.readAsDataURL(file);
+                });
+
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxWidth = 1800;
+                        const scale = Math.min(1, maxWidth / img.width);
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.round(img.width * scale);
+                        canvas.height = Math.round(img.height * scale);
+                        const ctx = canvas.getContext('2d');
+                        ctx.filter = 'contrast(1.25) brightness(1.05)';
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.9));
+                    };
+                    img.onerror = () => reject(new Error('Invalid image'));
+                    img.src = dataUrl;
+                });
+            }
+
+            async recognize(file, onProgress) {
+                const imageDataUrl = await this.preprocessImage(file);
+                const worker = await this.ensureWorker();
+                const { data: { text } } = await worker.recognize(imageDataUrl, {}, {
+                    logger: (message) => {
+                        if (message.status === 'recognizing text' && onProgress) {
+                            onProgress(Math.round((message.progress || 0) * 100));
+                        }
+                    }
+                });
+                return { text, imageDataUrl };
+            }
+        }
+
         if (isIOS && !isStandalone && !localStorage.getItem('iosInstallDismissed')) {
             const banner = document.getElementById('iosInstallBanner');
             const dismiss = document.getElementById('iosInstallDismiss');
@@ -1434,6 +1873,9 @@
                 };
                 this.lastValidResults = null;
                 this.clpTariffService = new CLPTariffService();
+                this.labelOCRService = new LabelOCRService();
+                this.pendingScan = null;
+                this.isScanning = false;
                 this.liveClpRate = 1.406;
                 this.currentStep = 1;
                 
@@ -1473,7 +1915,20 @@
                     clpRateChip: document.getElementById('clpRateChip'),
                     rateStatus: document.getElementById('rateStatus'),
                     rateStatusText: document.getElementById('rateStatusText'),
-                    rateBreakdown: document.getElementById('rateBreakdown')
+                    rateBreakdown: document.getElementById('rateBreakdown'),
+                    scanCameraBtn: document.getElementById('scanCameraBtn'),
+                    scanAlbumBtn: document.getElementById('scanAlbumBtn'),
+                    scanCameraInput: document.getElementById('scanCameraInput'),
+                    scanAlbumInput: document.getElementById('scanAlbumInput'),
+                    scanStatus: document.getElementById('scanStatus'),
+                    scanStatusText: document.getElementById('scanStatusText'),
+                    scanPreview: document.getElementById('scanPreview'),
+                    scanThumb: document.getElementById('scanThumb'),
+                    scanKwhValue: document.getElementById('scanKwhValue'),
+                    scanHoursValue: document.getElementById('scanHoursValue'),
+                    scanTypeValue: document.getElementById('scanTypeValue'),
+                    scanConfidence: document.getElementById('scanConfidence'),
+                    scanApplyBtn: document.getElementById('scanApplyBtn')
                 };
             }
 
@@ -1543,6 +1998,138 @@
                         });
                     }
                 });
+
+                this.elements.scanCameraBtn?.addEventListener('click', () => {
+                    this.elements.scanCameraInput?.click();
+                });
+                this.elements.scanAlbumBtn?.addEventListener('click', () => {
+                    this.elements.scanAlbumInput?.click();
+                });
+                this.elements.scanCameraInput?.addEventListener('change', (e) => {
+                    this.handleScanFile(e.target.files?.[0]);
+                    e.target.value = '';
+                });
+                this.elements.scanAlbumInput?.addEventListener('change', (e) => {
+                    this.handleScanFile(e.target.files?.[0]);
+                    e.target.value = '';
+                });
+                this.elements.scanApplyBtn?.addEventListener('click', () => {
+                    this.applyPendingScan(true);
+                });
+            }
+
+            setScanBusy(busy, message = '') {
+                this.isScanning = busy;
+                this.elements.scanCameraBtn.disabled = busy;
+                this.elements.scanAlbumBtn.disabled = busy;
+                this.elements.scanApplyBtn.disabled = busy;
+                this.elements.scanStatus?.classList.toggle('visible', busy);
+                if (this.elements.scanStatusText && message) {
+                    this.elements.scanStatusText.textContent = message;
+                }
+            }
+
+            showScanPreview(parsed, imageDataUrl) {
+                if (this.elements.scanThumb && imageDataUrl) {
+                    this.elements.scanThumb.src = imageDataUrl;
+                }
+                if (this.elements.scanKwhValue) {
+                    this.elements.scanKwhValue.textContent = parsed.kWh != null ? `${parsed.kWh} kWh` : '—';
+                }
+                if (this.elements.scanHoursValue) {
+                    this.elements.scanHoursValue.textContent = parsed.defaultHours != null
+                        ? `${parsed.defaultHours} 小時`
+                        : '—';
+                }
+                if (this.elements.scanTypeValue) {
+                    const typeKey = parsed.productType || 'unknown';
+                    this.elements.scanTypeValue.textContent = PRODUCT_TYPE_LABELS[typeKey] || PRODUCT_TYPE_LABELS.unknown;
+                }
+                if (this.elements.scanConfidence) {
+                    const labels = {
+                        high: '辨識信心：高 · High confidence',
+                        medium: '辨識信心：中 · Medium confidence',
+                        low: '辨識信心：低 · Low confidence'
+                    };
+                    this.elements.scanConfidence.textContent = labels[parsed.confidence] || labels.low;
+                    this.elements.scanConfidence.className = `scan-confidence ${parsed.confidence}`;
+                }
+                this.elements.scanPreview?.classList.add('visible');
+            }
+
+            syncUsageChips(hours) {
+                if (!Number.isFinite(hours)) return;
+                this.elements.usageChips?.forEach((chip) => {
+                    const chipHours = parseInt(chip.dataset.hours, 10);
+                    chip.classList.toggle('active', chipHours === hours);
+                });
+            }
+
+            applyParsedLabel(parsed) {
+                if (this.elements.kWh && parsed.kWh != null) {
+                    this.elements.kWh.value = parsed.kWh;
+                }
+                if (this.elements.defaultHours && parsed.defaultHours != null) {
+                    this.elements.defaultHours.value = parsed.defaultHours;
+                }
+                if (this.elements.usageHours && parsed.suggestedUsageHours != null) {
+                    this.elements.usageHours.value = parsed.suggestedUsageHours;
+                    this.syncUsageChips(parsed.suggestedUsageHours);
+                }
+            }
+
+            applyPendingScan(goToResults = false) {
+                if (!this.pendingScan) {
+                    this.showError('請先拍攝能源標籤 Please scan an energy label first');
+                    return;
+                }
+                if (this.pendingScan.kWh == null) {
+                    this.showError('未能讀取年耗電量，請手動輸入或重新拍攝 · Could not read annual kWh — enter manually or rescan');
+                    return;
+                }
+
+                this.applyParsedLabel(this.pendingScan);
+                this.hideError();
+
+                if (goToResults) {
+                    this.goToResults();
+                }
+            }
+
+            async handleScanFile(file) {
+                if (!file || this.isScanning) return;
+                if (!file.type.startsWith('image/')) {
+                    this.showError('請選擇圖片檔案 Please select an image file');
+                    return;
+                }
+
+                this.hideError();
+                this.pendingScan = null;
+                this.elements.scanPreview?.classList.remove('visible');
+                this.setScanBusy(true, '載入 OCR 引擎… Loading OCR engine…');
+
+                try {
+                    this.setScanBusy(true, '辨識標籤文字… 0% · Reading label 0%');
+                    const { text, imageDataUrl } = await this.labelOCRService.recognize(file, (pct) => {
+                        this.setScanBusy(true, `辨識標籤文字… ${pct}% · Reading label ${pct}%`);
+                    });
+
+                    const parsed = EnergyLabelParser.parse(text);
+                    parsed.imageDataUrl = imageDataUrl;
+                    this.pendingScan = parsed;
+                    this.showScanPreview(parsed, imageDataUrl);
+
+                    if (parsed.kWh != null) {
+                        this.applyParsedLabel(parsed);
+                        this.goToResults();
+                    } else {
+                        this.showError('未能讀取年耗電量，請對準標籤上的 kWh 數字後重試 · Could not read kWh — align the label number and retry');
+                    }
+                } catch (err) {
+                    this.showError(`標籤辨識失敗 · Label scan failed (${err.message})`);
+                } finally {
+                    this.setScanBusy(false);
+                }
             }
 
             setRateStatus(state, message, breakdown = '') {
