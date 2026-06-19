@@ -3898,6 +3898,7 @@
                 this.householdProvider = 'clp';
                 this.homeSettingsEditing = false;
                 this.currentStep = 1;
+                this.previousStepBeforeAppliances = 1;
                 this.applianceSearch = new ApplianceSearchService(APPLIANCE_CATALOG, APPLIANCE_GROUPS);
                 this.appliancePickerQuery = '';
 
@@ -4805,6 +4806,11 @@
                 this.hideError();
                 this.homeSettingsEditing = false;
                 try {
+                    if (this.currentStep === 3) {
+                        this.showStep(this.previousStepBeforeAppliances || 1);
+                        return;
+                    }
+                    this.previousStepBeforeAppliances = this.currentStep;
                     this.showStep(3);
                 } catch (err) {
                     console.error('openMyAppliances error', err);
@@ -5214,6 +5220,12 @@
                 this.elements.stepDot2?.classList.toggle('active', isResults);
                 this.elements.backBtn?.classList.toggle('visible', isResults);
                 this.elements.myAppliancesBtn?.classList.toggle('active-nav', isAppliances);
+                if (this.elements.myAppliancesBtn) {
+                    this.elements.myAppliancesBtn.setAttribute(
+                        'aria-label',
+                        isAppliances ? '返回上一頁 Back to previous page' : '我的電器 My home appliances'
+                    );
+                }
 
                 if (this.elements.stepLabel) {
                     if (isAppliances) {
