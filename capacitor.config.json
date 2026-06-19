@@ -1,0 +1,13 @@
+{
+  "appId": "com.ralhkt.hkelectricity",
+  "appName": "港電費計算器",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#f8fafc",
+    "allowsLinkPreview": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
