@@ -3675,6 +3675,13 @@
                 return `${amount.toFixed(1)} kWh`;
             }
 
+            formatRatedHours(item) {
+                const spec = APPLIANCE_CATALOG[item.applianceType];
+                const unit = spec?.usageIsCycles ? '次' : '小時';
+                const unitEn = spec?.usageIsCycles ? 'uses' : 'hrs';
+                return `${item.defaultHours} ${unit} ${unitEn}`;
+            }
+
             getDefaultSaveName() {
                 const spec = APPLIANCE_CATALOG[this.selectedAppliance];
                 return spec?.label?.split(' ')[0] || '我的電器';
@@ -3971,7 +3978,7 @@
                         <div class="saved-item-stats">
                             <div>年耗電 Annual <strong class="stat-kwh"></strong></div>
                             <div>月費 Monthly <strong class="stat-monthly"></strong></div>
-                            <div>標籤 kWh <strong class="stat-label-kwh"></strong></div>
+                            <div>標籤額定小時 Rated <strong class="stat-rated-hours"></strong></div>
                             <div>電價 Rate <strong class="stat-rate"></strong></div>
                         </div>
                         <div class="saved-item-actions">
@@ -3984,7 +3991,7 @@
                     card.querySelector('.saved-item-cost').textContent = `${this.formatHKD(item.annualCost)}/年`;
                     card.querySelector('.stat-kwh').textContent = this.formatKwh(item.annualKwh);
                     card.querySelector('.stat-monthly').textContent = this.formatHKD(item.monthlyCost);
-                    card.querySelector('.stat-label-kwh').textContent = `${item.labelKwh} kWh`;
+                    card.querySelector('.stat-rated-hours').textContent = this.formatRatedHours(item);
                     card.querySelector('.stat-rate').textContent = `HK$${item.costPerKWh.toFixed(3)}`;
 
                     card.querySelector('.edit')?.addEventListener('click', () => this.loadSavedAppliance(item.id));
