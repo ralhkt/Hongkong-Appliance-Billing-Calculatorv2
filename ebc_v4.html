@@ -512,14 +512,16 @@
             overflow-wrap: anywhere;
         }
 
-        .rate-presets {
+        .rate-presets,
+        .usage-presets {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
             margin-top: 0.25rem;
         }
 
-        .rate-chip {
+        .rate-chip,
+        .usage-chip {
             padding: 0.5rem 0.75rem;
             border-radius: 999px;
             border: 1px solid hsl(20, 5.9%, 90%);
@@ -533,11 +535,13 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .rate-chip:active {
+        .rate-chip:active,
+        .usage-chip:active {
             transform: scale(0.97);
         }
 
-        .rate-chip.active {
+        .rate-chip.active,
+        .usage-chip.active {
             background: var(--ios-blue);
             border-color: var(--ios-blue);
             color: white;
@@ -869,13 +873,15 @@
                 color: hsl(0, 80%, 85%);
             }
 
-            .rate-chip {
+            .rate-chip,
+            .usage-chip {
                 background: hsl(240, 10%, 20%);
                 border-color: hsl(240, 10%, 30%);
                 color: hsl(0, 0%, 90%);
             }
 
-            .rate-chip.active {
+            .rate-chip.active,
+            .usage-chip.active {
                 background: var(--ios-blue);
                 border-color: var(--ios-blue);
             }
@@ -990,7 +996,16 @@
                                 />
                                 <span class="input-unit">小時 hrs</span>
                             </div>
-                            <p class="helper-text">您預計該電器全年實際運作時數 · Your estimated annual running hours</p>
+                            <div class="usage-presets" role="group" aria-label="Usage hours presets">
+                                <button type="button" class="usage-chip active" data-hours="8760" data-preset="yearly-247" title="365 days × 24 hours">全年 24/7</button>
+                                <button type="button" class="usage-chip" data-hours="2920" data-preset="yearly-8h" title="365 days × 8 hours/day">每日 8小時</button>
+                                <button type="button" class="usage-chip" data-hours="1460" data-preset="yearly-4h" title="365 days × 4 hours/day">每日 4小時</button>
+                                <button type="button" class="usage-chip" data-hours="2000" data-preset="office" title="250 weekdays × 8 hours">辦公日 Office</button>
+                                <button type="button" class="usage-chip" data-hours="1104" data-preset="summer-q" title="Jun–Aug, 12 hours/day × 92 days">夏季季度 Summer</button>
+                                <button type="button" class="usage-chip" data-hours="552" data-preset="winter-q" title="Dec–Feb, 6 hours/day × 92 days">冬季季度 Winter</button>
+                                <button type="button" class="usage-chip" data-hours="832" data-preset="weekend" title="52 weekends × 16 hours">週末 Weekend</button>
+                            </div>
+                            <p class="helper-text">選擇預設或自行輸入全年實際運作時數 · Pick a preset or enter your annual running hours</p>
                         </div>
 
                         <!-- Default Hours Input -->
@@ -1370,6 +1385,7 @@
                     monthlyCostValue: document.getElementById('monthlyCostValue'),
                     dailyCostValue: document.getElementById('dailyCostValue'),
                     rateChips: document.querySelectorAll('.rate-chip'),
+                    usageChips: document.querySelectorAll('.usage-chip'),
                     clpRateChip: document.getElementById('clpRateChip'),
                     rateStatus: document.getElementById('rateStatus'),
                     rateStatusText: document.getElementById('rateStatusText'),
@@ -1400,6 +1416,27 @@
                         chip.classList.add('active');
                     });
                 });
+
+                this.elements.usageChips?.forEach((chip) => {
+                    chip.addEventListener('click', () => {
+                        const hours = parseInt(chip.dataset.hours, 10);
+                        if (this.elements.usageHours && Number.isFinite(hours)) {
+                            this.elements.usageHours.value = hours;
+                        }
+                        this.elements.usageChips.forEach((c) => c.classList.remove('active'));
+                        chip.classList.add('active');
+                    });
+                });
+
+                if (this.elements.usageHours) {
+                    this.elements.usageHours.addEventListener('input', () => {
+                        const current = parseInt(this.elements.usageHours.value, 10);
+                        this.elements.usageChips?.forEach((chip) => {
+                            const chipHours = parseInt(chip.dataset.hours, 10);
+                            chip.classList.toggle('active', chipHours === current);
+                        });
+                    });
+                }
 
                 if (this.elements.costPerKWh) {
                     this.elements.costPerKWh.addEventListener('input', () => {
