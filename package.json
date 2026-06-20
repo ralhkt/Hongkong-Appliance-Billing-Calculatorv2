@@ -5,6 +5,7 @@
   "scripts": {
     "build": "node scripts/build-meels-index.mjs && node scripts/build-www.mjs",
     "build:meels": "node scripts/build-meels-index.mjs",
+    "refresh:meels": "node scripts/build-meels-index.mjs",
     "release:ios": "bash scripts/release-ios.sh",
     "push:github": "bash scripts/push-github.sh",
     "deploy:lookup-worker": "bash scripts/deploy-lookup-worker.sh",

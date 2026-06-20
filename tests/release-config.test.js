@@ -50,10 +50,19 @@ describe('release config', () => {
     it('exposes simplified model lookup search flow with Grok fallback', () => {
         const html = readText('index.html');
         expect(html).toContain('id="lookupSearchBtn"');
+        expect(html).toContain('id="lookupPanelToggle"');
         expect(html).toContain('id="lookupResultKwh"');
         expect(html).toContain('fetchLookup');
         expect(html).toContain('searchMeelsRegistry');
         expect(html).toContain('id="lookupFallbackWrap"');
         expect(html).toContain('meels-index.json');
+    });
+
+    it('collapses scan and lookup panels until user expands them', () => {
+        const html = readText('index.html');
+        expect(html).toContain('id="scanPanelToggle"');
+        expect(html).toContain('id="scanPanelBody"');
+        expect(html).toContain('id="lookupPanelBody"');
+        expect(html).toContain('setFeaturePanelExpanded');
     });
 });

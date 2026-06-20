@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     cleanTrailingPartialCjk,
+    looksLikeModelCode,
     normalizeMeelsToken,
     scoreModelMatch,
     searchMeelsRegistry,
@@ -63,7 +64,10 @@ describe('MEELS registry search', () => {
 
     it('strips accidental trailing partial Chinese from brand input', () => {
         expect(cleanTrailingPartialCjk('Panasonic，大')).toBe('Panasonic');
+        expect(cleanTrailingPartialCjk('panasonic （可')).toBe('panasonic');
+        expect(cleanTrailingPartialCjk('Panasonic（可留空）')).toBe('Panasonic');
         expect(splitLookupQuery('Panasonic，大', 'NR-BV320X').brand).toBe('Panasonic');
+        expect(splitLookupQuery('panasonic （可', 'NR-BV320X').brand).toBe('panasonic');
     });
 
     it('tolerates brand typos like Panasonc', () => {
@@ -90,6 +94,21 @@ describe('MEELS registry search', () => {
         const modelOnly = searchMeelsRegistry(SAMPLE, '', 'KI38VA00HK', ['refrigerator']);
         expect(modelOnly.ok).toBe(true);
         expect(modelOnly.result.brand).toBe('Siemens');
+    });
+
+    it('accepts model typed only in the brand field', () => {
+        const split = splitLookupQuery('NR-BV320X', '');
+        expect(split.brand).toBe('');
+        expect(split.model).toBe('NR-BV320X');
+        const hit = searchMeelsRegistry(SAMPLE, split.brand, split.model, ['refrigerator']);
+        expect(hit.ok).toBe(true);
+        expect(hit.result.annualKwh).toBe(265);
+    });
+
+    it('detects model-like codes', () => {
+        expect(looksLikeModelCode('KI38VA00HK')).toBe(true);
+        expect(looksLikeModelCode('9290030080')).toBe(true);
+        expect(looksLikeModelCode('Panasonic')).toBe(false);
     });
 
     it('requires brand when model-only match is ambiguous', () => {

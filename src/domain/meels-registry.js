@@ -23,7 +23,8 @@ export const MEELS_BRAND_ALIASES = {
 
 export function cleanTrailingPartialCjk(value) {
     return String(value ?? '')
-        .replace(/[,，、]\s*[\u4e00-\u9fff]{1,4}$/u, '')
+        .replace(/[,，、]\s*[\u4e00-\u9fff]{1,6}$/u, '')
+        .replace(/\s*[（(][\u4e00-\u9fff]{1,6}[)）]?$/u, '')
         .trim();
 }
 
@@ -108,6 +109,33 @@ export function expandBrandQueries(brand) {
     return [...queries];
 }
 
+export function looksLikeModelCode(value) {
+    const text = normalizeLookupText(value);
+    const token = normalizeMeelsToken(text);
+    if (token.length < 3) return false;
+
+    const hasDigit = /\d/.test(token);
+    const canonicalBrands = new Set(Object.keys(MEELS_BRAND_ALIASES).map(normalizeMeelsToken));
+    const brandQueries = expandBrandQueries(text);
+    const matchesKnownBrand = canonicalBrands.has(token)
+        || brandQueries.some((query) => canonicalBrands.has(query));
+
+    if (!hasDigit) {
+        return matchesKnownBrand ? false : token.length >= 8;
+    }
+
+    if (matchesKnownBrand && !/[/-]/.test(text)) return false;
+
+    const hasLetter = /[a-z]/i.test(text);
+    const hasSeparator = /[-/.]/.test(text);
+
+    if (hasDigit && (hasLetter || hasSeparator)) return true;
+    if (token.length >= 6 && hasDigit) return true;
+    if (token.length >= 8 && /^[a-z0-9]+$/i.test(token)) return true;
+
+    return hasDigit;
+}
+
 export function splitLookupQuery(brand, model) {
     let normalizedBrand = cleanTrailingPartialCjk(normalizeLookupText(brand));
     let normalizedModel = normalizeLookupText(model);
@@ -119,7 +147,7 @@ export function splitLookupQuery(brand, model) {
     const brandTokens = normalizedBrand.split(/\s+/).filter(Boolean);
     if (brandTokens.length >= 2) {
         const lastToken = brandTokens[brandTokens.length - 1];
-        if (/[A-Za-z0-9]/.test(lastToken) && lastToken.length >= 3) {
+        if (looksLikeModelCode(lastToken) || (/[A-Za-z0-9]/.test(lastToken) && lastToken.length >= 3)) {
             return {
                 brand: brandTokens.slice(0, -1).join(' '),
                 model: lastToken
@@ -127,13 +155,20 @@ export function splitLookupQuery(brand, model) {
         }
     }
 
+    if (!normalizedModel && normalizedBrand && looksLikeModelCode(normalizedBrand)) {
+        return { brand: '', model: normalizedBrand };
+    }
+
     if (!normalizedBrand && normalizedModel.includes(' ')) {
         const modelTokens = normalizedModel.split(/\s+/).filter(Boolean);
         if (modelTokens.length >= 2) {
-            return {
-                brand: modelTokens.slice(0, -1).join(' '),
-                model: modelTokens[modelTokens.length - 1]
-            };
+            const lastToken = modelTokens[modelTokens.length - 1];
+            if (looksLikeModelCode(lastToken) || lastToken.length >= 3) {
+                return {
+                    brand: modelTokens.slice(0, -1).join(' '),
+                    model: lastToken
+                };
+            }
         }
     }
 
@@ -198,13 +233,16 @@ export function scoreBrandMatch(brandQuery, entry) {
 
 export function scoreMeelsEntry(entry, brand, model) {
     const modelScore = scoreModelMatch(model, entry.model);
-    if (modelScore < 62) return 0;
+    if (modelScore < 55) return 0;
 
     const brandScore = scoreBrandMatch(brand, entry);
     const hasBrand = Boolean(normalizeLookupText(brand));
 
     if (!hasBrand) {
-        return modelScore >= 88 ? modelScore + 8 : modelScore >= 75 ? modelScore : 0;
+        if (modelScore >= 95) return modelScore + 12;
+        if (modelScore >= 82) return modelScore + 8;
+        if (modelScore >= 68) return modelScore + 4;
+        return 0;
     }
 
     if (brandScore < 18 && modelScore < 82) return 0;
@@ -220,8 +258,8 @@ export function validateMeelsLookupInput(brand, model) {
         return { ok: false, message: '請輸入型號（至少 2 個字）· Enter model (min 2 chars)' };
     }
 
-    if (normalizedBrand.length < 2 && normalizedModel.length < 5) {
-        return { ok: false, message: '型號較短時請同時輸入品牌 · Enter brand when model is short' };
+    if (!normalizedBrand && !looksLikeModelCode(normalizedModel) && normalizedModel.length < 4) {
+        return { ok: false, message: '型號較短時請輸入品牌，或輸入更完整型號 · Add brand or a longer model code' };
     }
 
     if (`${normalizedBrand} ${normalizedModel}`.length > 120) {
@@ -247,14 +285,17 @@ export function buildMeelsLookupResult(entry, { brand, model, confidence, catalo
     const applianceCategory = catalogKeys.includes(entry.category)
         ? entry.category
         : inferApplianceType(entry.category, catalogKeys);
+    const estimateNote = entry.kwhEstimated
+        ? '（按標稱功率×1000小時估算）· Estimated from rated power × 1000 h/yr'
+        : '';
 
     return parseLookupPayload({
         annualKwh: entry.annualKwh,
         applianceCategory,
         confidence,
         sourceUrl: MEELS_SOURCE_URL,
-        summary: `${matchNote} · MEELS 能效 ${entry.grade ?? '—'} 級`,
-        summaryEn: `${matchNote} · MEELS grade ${entry.grade ?? '—'}`,
+        summary: `${matchNote} · MEELS 能效 ${entry.grade ?? '—'} 級${estimateNote}`,
+        summaryEn: `${matchNote} · MEELS grade ${entry.grade ?? '—'}${estimateNote ? ' · estimated kWh' : ''}`,
         brand: entry.brandEn || brand,
         model: entry.model
     }, catalogKeys);
@@ -270,9 +311,12 @@ export function searchMeelsRegistry(entries, brand, model, catalogKeys = [], { l
         return { ok: false, message: 'MEELS 資料未載入 · MEELS data not loaded' };
     }
 
+    const hasBrand = Boolean(validation.brand);
+    const minScore = hasBrand ? 88 : 72;
+
     const ranked = entries
         .map((entry) => ({ entry, score: scoreMeelsEntry(entry, validation.brand, validation.model) }))
-        .filter((item) => item.score >= 88)
+        .filter((item) => item.score >= minScore)
         .sort((a, b) => b.score - a.score);
 
     if (!ranked.length) {
@@ -283,14 +327,13 @@ export function searchMeelsRegistry(entries, brand, model, catalogKeys = [], { l
     }
 
     const best = ranked[0];
-    const hasBrand = Boolean(validation.brand);
-    const confidence = best.score >= 145
-        ? 'high'
-        : best.score >= 115
-            ? 'medium'
-            : 'low';
+    const closeCount = ranked.filter((item) => item.score >= best.score - 8).length;
+    const bestModelScore = scoreModelMatch(validation.model, best.entry.model);
+    const confidence = hasBrand
+        ? (best.score >= 145 ? 'high' : best.score >= 115 ? 'medium' : 'low')
+        : (bestModelScore >= 95 && closeCount === 1 ? 'high' : bestModelScore >= 82 && closeCount <= 2 ? 'medium' : 'low');
 
-    if (!hasBrand && ranked.filter((item) => item.score >= best.score - 8).length > 1) {
+    if (!hasBrand && closeCount > 1 && bestModelScore < 95) {
         return {
             ok: false,
             message: '有多個相近型號，請輸入品牌以縮窄結果 · Multiple close matches — add brand',
@@ -338,6 +381,7 @@ if (typeof globalThis !== 'undefined') {
     globalThis.searchMeelsRegistry = searchMeelsRegistry;
     globalThis.validateMeelsLookupInput = validateMeelsLookupInput;
     globalThis.cleanTrailingPartialCjk = cleanTrailingPartialCjk;
+    globalThis.looksLikeModelCode = looksLikeModelCode;
     globalThis.splitLookupQuery = splitLookupQuery;
     globalThis.MEELS_SOURCE_URL = MEELS_SOURCE_URL;
 }

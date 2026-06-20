@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
+const LAMP_HOURS_PER_YEAR = 1000;
+
 const SOURCES = [
     {
         url: 'https://www.emsd.gov.hk/energylabel/files/meels_ref.csv',
@@ -31,24 +33,25 @@ const SOURCES = [
         kwh: 'Annual Energy Consumption (kWh)'
     },
     {
+        url: 'https://www.emsd.gov.hk/energylabel/files/meels_ic.csv',
+        category: 'induction',
+        kwh: 'Annual Energy Consumption (kWh)'
+    },
+    {
         url: 'https://www.emsd.gov.hk/energylabel/files/meels_led.csv',
         category: 'led_lamp',
-        kwh: 'Annual Energy Consumption (kWh)'
+        kwh: [
+            'Annual Energy Consumption (kWh)',
+            'Rated Power consumption (initial) (W)',
+            'Measured Power consumption (W)'
+        ],
+        estimateFromWatts: true
     },
     {
         url: 'https://www.emsd.gov.hk/energylabel/files/meels_cfl.csv',
         category: 'cfl',
-        kwh: 'Annual Energy Consumption (kWh)'
-    },
-    {
-        url: 'https://www.emsd.gov.hk/energylabel/files/meels_stewh.csv',
-        category: 'water_heater',
-        kwh: 'Annual Energy Consumption (kWh)'
-    },
-    {
-        url: 'https://www.emsd.gov.hk/energylabel/files/meels_ic.csv',
-        category: 'induction',
-        kwh: 'Annual Energy Consumption (kWh)'
+        kwh: ['Annual Energy Consumption (kWh)', 'Rated Wattage (W)'],
+        estimateFromWatts: true
     }
 ];
 
@@ -104,6 +107,25 @@ function rowsToObjects(rows) {
         .map((line) => Object.fromEntries(header.map((key, idx) => [key, line[idx] ?? ''])));
 }
 
+function resolveAnnualKwh(record, source) {
+    const columns = Array.isArray(source.kwh) ? source.kwh : [source.kwh];
+
+    for (const column of columns) {
+        const value = Number(record[column]);
+        if (!Number.isFinite(value) || value <= 0) continue;
+
+        const isWatts = /\(W\)/i.test(column);
+        if (isWatts && source.estimateFromWatts) {
+            const annualKwh = Math.round((value * LAMP_HOURS_PER_YEAR) / 1000 * 10) / 10;
+            return { annualKwh, kwhEstimated: true };
+        }
+
+        return { annualKwh: value, kwhEstimated: false };
+    }
+
+    return null;
+}
+
 async function loadSource(source) {
     const response = await fetch(source.url);
     if (!response.ok) {
@@ -117,14 +139,15 @@ async function loadSource(source) {
         const model = String(record.Model ?? '').trim();
         const brandEn = String(record['Brand English'] ?? '').trim();
         const brandZh = String(record['Brand Traditional Chinese'] ?? '').trim();
-        const annualKwh = Number(record[source.kwh]);
-        if (!model || !brandEn || !Number.isFinite(annualKwh) || annualKwh <= 0) continue;
+        const kwhInfo = resolveAnnualKwh(record, source);
+        if (!model || !brandEn || !kwhInfo) continue;
 
         entries.push({
             brandEn,
             brandZh,
             model,
-            annualKwh,
+            annualKwh: kwhInfo.annualKwh,
+            kwhEstimated: kwhInfo.kwhEstimated,
             category: source.category,
             grade: Number(record['Energy Efficiency Grade (1 to 5)'] ?? record['Energy Efficiency Grade Cooling (1 to 5)']) || null,
             ref: String(record['Reference Number'] ?? '').trim() || null
@@ -135,10 +158,19 @@ async function loadSource(source) {
 }
 
 const entries = [];
+const seen = new Set();
+
 for (const source of SOURCES) {
     const batch = await loadSource(source);
-    entries.push(...batch);
-    console.log(`${source.url.split('/').pop()}: ${batch.length} models`);
+    let added = 0;
+    for (const entry of batch) {
+        const key = `${entry.ref || ''}|${entry.brandEn}|${entry.model}|${entry.category}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        entries.push(entry);
+        added += 1;
+    }
+    console.log(`${source.url.split('/').pop()}: ${added} models`);
 }
 
 const payload = {

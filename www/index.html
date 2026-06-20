@@ -814,22 +814,133 @@
             font-weight: 500;
         }
 
-        /* Energy label scan */
-        .scan-card {
-            background: linear-gradient(135deg, hsl(207, 100%, 97%), hsl(207, 80%, 94%));
-            border: 1px solid hsl(207, 100%, 85%);
+        /* Collapsible feature panels (scan / lookup) */
+        .feature-panel {
+            margin-bottom: 0.75rem;
             border-radius: var(--radius);
-            padding: 1rem;
-            margin-bottom: 1rem;
+            overflow: hidden;
         }
 
-        .scan-title {
+        .feature-panel-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            line-height: 1.35;
+            text-align: left;
+            cursor: pointer;
+            min-height: var(--touch-target);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .feature-panel-toggle[aria-expanded="true"] {
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .feature-panel-leading {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .feature-panel-text {
+            min-width: 0;
+        }
+
+        .feature-panel-title {
+            display: block;
             font-weight: 600;
-            margin-bottom: 0.375rem;
+        }
+
+        .feature-panel-hint {
+            display: block;
+            margin-top: 0.125rem;
+            font-size: 0.6875rem;
+            font-weight: 500;
+            opacity: 0.85;
+        }
+
+        .feature-panel-chevron {
+            flex-shrink: 0;
+            color: var(--ios-gray);
+            transition: transform 0.2s ease;
+        }
+
+        .feature-panel-toggle[aria-expanded="true"] .feature-panel-chevron {
+            transform: rotate(180deg);
+        }
+
+        .feature-panel-body {
+            padding: 0 1rem 1rem;
+            border: 1px solid transparent;
+            border-top: none;
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+
+        .scan-panel-toggle {
+            background: linear-gradient(135deg, hsl(207, 100%, 97%), hsl(207, 80%, 94%));
+            border-color: hsl(207, 100%, 85%);
+            color: hsl(20, 14.3%, 4.1%);
+        }
+
+        .scan-panel-toggle:active {
+            background: hsl(207, 100%, 94%);
+        }
+
+        .scan-panel-toggle[aria-expanded="true"] {
+            border-bottom-color: hsl(207, 100%, 90%);
+        }
+
+        .scan-panel-toggle .feature-panel-hint {
+            color: var(--ios-blue);
+        }
+
+        .scan-panel-toggle[aria-expanded="true"] .feature-panel-hint {
+            color: var(--ios-gray);
+        }
+
+        #scanPanelBody {
+            background: linear-gradient(180deg, hsl(207, 100%, 97%), hsl(207, 80%, 94%));
+            border-color: hsl(207, 100%, 85%);
+        }
+
+        .lookup-panel-toggle {
+            background: linear-gradient(135deg, hsl(280, 60%, 97%), hsl(260, 50%, 95%));
+            border-color: hsl(270, 45%, 85%);
+            color: hsl(20, 14.3%, 4.1%);
+        }
+
+        .lookup-panel-toggle:active {
+            background: hsl(270, 45%, 93%);
+        }
+
+        .lookup-panel-toggle[aria-expanded="true"] {
+            border-bottom-color: hsl(270, 45%, 88%);
+        }
+
+        .lookup-panel-toggle .feature-panel-hint {
+            color: hsl(270, 55%, 42%);
+        }
+
+        .lookup-panel-toggle[aria-expanded="true"] .feature-panel-hint {
+            color: var(--ios-gray);
+        }
+
+        #lookupPanelBody {
+            background: linear-gradient(180deg, hsl(280, 60%, 97%), hsl(260, 50%, 95%));
+            border-color: hsl(270, 45%, 85%);
+        }
+
+        /* Energy label scan */
+        .scan-card {
+            margin-bottom: 0;
         }
 
         .scan-desc {
@@ -913,20 +1024,7 @@
 
         /* AI model lookup */
         .lookup-card {
-            background: linear-gradient(135deg, hsl(280, 60%, 97%), hsl(260, 50%, 95%));
-            border: 1px solid hsl(270, 45%, 85%);
-            border-radius: var(--radius);
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .lookup-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.375rem;
+            margin-bottom: 0;
         }
 
         .lookup-desc {
@@ -934,6 +1032,12 @@
             color: var(--ios-gray);
             line-height: 1.45;
             margin-bottom: 0.875rem;
+        }
+
+        .label-optional {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--ios-gray);
         }
 
         .lookup-fields {
@@ -2605,6 +2709,28 @@
                 border-color: hsl(240, 10%, 28%);
             }
 
+            .scan-panel-toggle,
+            #scanPanelBody {
+                background: hsl(207, 40%, 16%);
+                border-color: hsl(207, 40%, 28%);
+                color: hsl(0, 0%, 92%);
+            }
+
+            .scan-panel-toggle:active {
+                background: hsl(207, 40%, 20%);
+            }
+
+            .lookup-panel-toggle,
+            #lookupPanelBody {
+                background: hsl(270, 30%, 16%);
+                border-color: hsl(270, 30%, 28%);
+                color: hsl(0, 0%, 92%);
+            }
+
+            .lookup-panel-toggle:active {
+                background: hsl(270, 30%, 20%);
+            }
+
             .tariff-note-toggle {
                 background: hsl(207, 40%, 16%);
                 border-color: hsl(207, 40%, 28%);
@@ -2761,11 +2887,18 @@
 
             <!-- Step 1: Input -->
             <div id="stepInput" class="step-view active">
-                <div class="scan-card" id="scanCard">
-                    <div class="scan-title">
-                        <svg class="svg-icon text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                        拍攝能源標籤 Scan Energy Label
-                    </div>
+                <div class="scan-card feature-panel" id="scanCard">
+                    <button type="button" id="scanPanelToggle" class="feature-panel-toggle scan-panel-toggle" aria-expanded="false" aria-controls="scanPanelBody">
+                        <span class="feature-panel-leading">
+                            <svg class="svg-icon text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            <span class="feature-panel-text">
+                                <span class="feature-panel-title">拍攝能源標籤 Scan Energy Label</span>
+                                <span class="feature-panel-hint" data-expand-hint="點擊展開掃描 · Tap to scan" data-collapse-hint="點擊收起 · Tap to collapse">點擊展開掃描 · Tap to scan</span>
+                            </span>
+                        </span>
+                        <svg class="feature-panel-chevron svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    <div id="scanPanelBody" class="feature-panel-body" hidden>
                     <p class="scan-desc">拍攝香港強制性能源效益標籤，自動讀取年耗電量 · Photograph the HK MEELS label to auto-fill kWh</p>
                     <div class="scan-actions" id="scanActions">
                         <div class="scan-picker-wrap" id="scanCameraWrap">
@@ -2783,7 +2916,6 @@
                             <input type="file" id="scanAlbumInput" class="scan-file-input" accept="image/*" aria-label="Choose energy label from album" />
                         </div>
                     </div>
-                    <button type="button" id="scanSkipBtn" class="scan-skip-link">或跳過掃描，手動輸入參數 · Or skip scan and enter manually</button>
                     <div id="scanStatus" class="scan-status" role="status" aria-live="polite">
                         <span class="scan-spinner" aria-hidden="true"></span>
                         <span id="scanStatusText">辨識中… 0%</span>
@@ -2815,6 +2947,7 @@
                             </button>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div id="errorAlert" class="alert hidden">
@@ -2825,38 +2958,46 @@
                     </div>
                 </div>
 
-                <div class="lookup-card" id="lookupCard">
-                    <div class="lookup-title">
-                        <svg class="svg-icon text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                        型號查詢 Model Lookup
-                    </div>
-                    <p class="lookup-desc">輸入品牌與型號，搜尋機電署 MEELS 官方登記資料 · Search HK EMSD MEELS registry by brand &amp; model</p>
+                <div class="lookup-card feature-panel" id="lookupCard">
+                    <button type="button" id="lookupPanelToggle" class="feature-panel-toggle lookup-panel-toggle" aria-expanded="false" aria-controls="lookupPanelBody">
+                        <span class="feature-panel-leading">
+                            <svg class="svg-icon text-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                            <span class="feature-panel-text">
+                                <span class="feature-panel-title">型號查詢 Model Lookup</span>
+                                <span class="feature-panel-hint" data-expand-hint="點擊展開搜尋 · Tap to search" data-collapse-hint="點擊收起 · Tap to collapse">點擊展開搜尋 · Tap to search</span>
+                            </span>
+                        </span>
+                        <svg class="feature-panel-chevron svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    <div id="lookupPanelBody" class="feature-panel-body" hidden>
+                    <p class="lookup-desc">輸入型號即可搜尋（品牌選填，有助縮窄結果）· Search by model — brand optional</p>
                     <div class="lookup-fields">
                         <div class="input-group" style="margin-bottom:0;">
-                            <label for="lookupBrand" class="label">品牌 Brand</label>
+                            <label for="lookupBrand" class="label">品牌 Brand <span class="label-optional">選填 optional</span></label>
                             <input
-                                type="search"
+                                type="text"
                                 id="lookupBrand"
                                 class="input"
                                 placeholder="Panasonic"
                                 name="hk-lookup-brand"
-                                autocomplete="off"
+                                autocomplete="one-time-code"
                                 autocorrect="off"
                                 autocapitalize="off"
                                 spellcheck="false"
                                 enterkeyhint="next"
                                 aria-autocomplete="none"
+                                data-1p-ignore
                             />
                         </div>
                         <div class="input-group" style="margin-bottom:0;">
                             <label for="lookupModel" class="label">型號 Model</label>
                             <input
-                                type="search"
+                                type="text"
                                 id="lookupModel"
                                 class="input"
                                 placeholder="NR-BV320X"
                                 name="hk-lookup-model"
-                                autocomplete="off"
+                                autocomplete="one-time-code"
                                 autocorrect="off"
                                 autocapitalize="characters"
                                 spellcheck="false"
@@ -2897,7 +3038,7 @@
                             </button>
                         </div>
                     </div>
-                    <p class="helper-text" style="margin-top:0.625rem;margin-bottom:0;">資料來源：機電署 MEELS 官方登記（免費）· Source: EMSD MEELS official registry (free)</p>
+                    <p id="lookupDbMeta" class="helper-text" style="margin-top:0.625rem;margin-bottom:0;">資料來源：機電署 MEELS 官方登記（免費）· Source: EMSD MEELS official registry (free)</p>
                     <div id="lookupFallbackWrap" class="lookup-fallback-wrap hidden">
                         <p id="lookupBillingNotice" class="lookup-billing-notice hidden"></p>
                         <button type="button" id="lookupFallbackToggle" class="lookup-fallback-toggle" aria-expanded="false" aria-controls="lookupFallbackPanel">
@@ -2911,6 +3052,7 @@
                             </div>
                             <textarea id="lookupPasteInput" class="lookup-paste-area" placeholder="將 Grok 回覆貼上於此 · Paste Grok reply here" aria-label="Paste Grok lookup reply"></textarea>
                         </div>
+                    </div>
                     </div>
                 </div>
 
@@ -3987,7 +4129,8 @@
                     scanAlbumInput: document.getElementById('scanAlbumInput'),
                     scanStatus: document.getElementById('scanStatus'),
                     scanStatusText: document.getElementById('scanStatusText'),
-                    scanSkipBtn: document.getElementById('scanSkipBtn'),
+                    scanPanelToggle: document.getElementById('scanPanelToggle'),
+                    scanPanelBody: document.getElementById('scanPanelBody'),
                     scanPreview: document.getElementById('scanPreview'),
                     scanKwhInput: document.getElementById('scanKwhInput'),
                     scanThumb: document.getElementById('scanThumb'),
@@ -4010,6 +4153,8 @@
                     usageHoursLabel: document.getElementById('usageHoursLabel'),
                     usageHoursUnit: document.getElementById('usageHoursUnit'),
                     usageHoursHelper: document.getElementById('usageHoursHelper'),
+                    lookupPanelToggle: document.getElementById('lookupPanelToggle'),
+                    lookupPanelBody: document.getElementById('lookupPanelBody'),
                     lookupBrand: document.getElementById('lookupBrand'),
                     lookupModel: document.getElementById('lookupModel'),
                     lookupSearchBtn: document.getElementById('lookupSearchBtn'),
@@ -4113,6 +4258,43 @@
                 this.elements.calcParamsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
+            setFeaturePanelExpanded(toggle, body, expanded) {
+                if (!toggle || !body) return;
+                toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                body.hidden = !expanded;
+                const hint = toggle.querySelector('.feature-panel-hint');
+                if (hint) {
+                    hint.textContent = expanded
+                        ? (hint.dataset.collapseHint || '點擊收起 · Tap to collapse')
+                        : (hint.dataset.expandHint || '點擊展開 · Tap to expand');
+                }
+            }
+
+            toggleFeaturePanel(toggle, body) {
+                if (!toggle || !body) return;
+                const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+                this.setFeaturePanelExpanded(toggle, body, expanded);
+                if (expanded) {
+                    body.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+
+            ensureScanPanelExpanded() {
+                this.setFeaturePanelExpanded(
+                    this.elements.scanPanelToggle,
+                    this.elements.scanPanelBody,
+                    true
+                );
+            }
+
+            ensureLookupPanelExpanded() {
+                this.setFeaturePanelExpanded(
+                    this.elements.lookupPanelToggle,
+                    this.elements.lookupPanelBody,
+                    true
+                );
+            }
+
             sanitizeLookupBrandField() {
                 const input = this.elements.lookupBrand;
                 if (!input) return;
@@ -4131,6 +4313,7 @@
                     })
                     .then((payload) => {
                         this.meelsEntries = Array.isArray(payload?.entries) ? payload.entries : [];
+                        this.renderMeelsDbMeta(payload);
                         return this.meelsEntries;
                     })
                     .catch((err) => {
@@ -4145,7 +4328,18 @@
                 return this.meelsLoadPromise;
             }
 
+            renderMeelsDbMeta(payload = {}) {
+                const meta = document.getElementById('lookupDbMeta');
+                if (!meta) return;
+                const count = Number(payload?.count) || this.meelsEntries?.length || 0;
+                const updated = payload?.updatedAt || '';
+                const countLabel = count ? `${count.toLocaleString()} 款` : '—';
+                const updatedLabel = updated ? `更新 ${updated}` : '';
+                meta.textContent = `離線資料庫 Offline DB: ${countLabel}${updatedLabel ? ` · ${updatedLabel}` : ''} · 機電署 MEELS（免費）`;
+            }
+
             setLookupLoading(active) {
+                if (active) this.ensureLookupPanelExpanded();
                 this.lookupAutoInFlight = active;
                 this.elements.lookupSearchBtn?.toggleAttribute('disabled', active);
                 this.elements.lookupSearchBtn?.setAttribute('aria-busy', active ? 'true' : 'false');
@@ -4290,6 +4484,7 @@
             renderLookupAlternatives(alternatives = [], title = '') {
                 const container = this.elements.lookupAltList;
                 if (!container || !this.elements.lookupAlternatives) return;
+                if (alternatives.length) this.ensureLookupPanelExpanded();
                 container.innerHTML = '';
                 if (!alternatives.length) {
                     this.elements.lookupAlternatives.classList.add('hidden');
@@ -4319,6 +4514,7 @@
 
             renderLookupResult(result, validation = { warn: false, message: '' }, alternatives = []) {
                 if (!this.elements.lookupResult) return;
+                this.ensureLookupPanelExpanded();
                 this.elements.lookupResult.classList.remove('hidden');
                 this.renderLookupAlternatives(alternatives);
 
@@ -4553,8 +4749,19 @@
                 this.elements.backBtn?.addEventListener('click', goBack);
                 this.elements.recalculateBtn?.addEventListener('click', goBack);
                 this.elements.helpBtn?.addEventListener('click', () => this.openHelpSheet());
-                this.elements.scanSkipBtn?.addEventListener('click', () => this.scrollToCalcParams());
+                this.elements.scanPanelToggle?.addEventListener('click', () => {
+                    const expanding = this.elements.scanPanelToggle?.getAttribute('aria-expanded') !== 'true';
+                    this.toggleFeaturePanel(this.elements.scanPanelToggle, this.elements.scanPanelBody);
+                    if (expanding) this.labelOCRService.warmup();
+                });
+                this.elements.lookupPanelToggle?.addEventListener('click', () => {
+                    const expanding = this.elements.lookupPanelToggle?.getAttribute('aria-expanded') !== 'true';
+                    this.toggleFeaturePanel(this.elements.lookupPanelToggle, this.elements.lookupPanelBody);
+                    if (expanding) void this.loadMeelsRegistry();
+                });
                 this.elements.lookupSearchBtn?.addEventListener('click', () => void this.fetchLookup());
+                this.elements.lookupBrand?.addEventListener('input', () => this.sanitizeLookupBrandField());
+                this.elements.lookupBrand?.addEventListener('focus', () => this.sanitizeLookupBrandField());
                 this.elements.lookupBrand?.addEventListener('blur', () => this.sanitizeLookupBrandField());
                 this.elements.lookupBrand?.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
@@ -4829,6 +5036,7 @@
             }
 
             setScanBusy(busy, message = '') {
+                if (busy) this.ensureScanPanelExpanded();
                 this.isScanning = busy;
                 this.elements.scanCameraBtn.disabled = busy;
                 this.elements.scanAlbumBtn.disabled = busy;
@@ -4873,6 +5081,7 @@
                     this.elements.scanConfidence.textContent = labels[parsed.confidence] || labels.low;
                     this.elements.scanConfidence.className = `scan-confidence ${parsed.confidence}`;
                 }
+                this.ensureScanPanelExpanded();
                 this.elements.scanPreview?.classList.add('visible');
             }
 

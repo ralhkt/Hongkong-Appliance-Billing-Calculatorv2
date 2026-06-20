@@ -1333,7 +1333,7 @@
     general: ["general", "\u73CD\u5BF6", "\u73CD\u5B9D"]
   };
   function cleanTrailingPartialCjk(value) {
-    return String(value ?? "").replace(/[,，、]\s*[\u4e00-\u9fff]{1,4}$/u, "").trim();
+    return String(value ?? "").replace(/[,，、]\s*[\u4e00-\u9fff]{1,6}$/u, "").replace(/\s*[（(][\u4e00-\u9fff]{1,6}[)）]?$/u, "").trim();
   }
   function normalizeMeelsToken(value) {
     return String(value ?? "").trim().toLowerCase().replace(/[（(]hk[)）]/gi, "").replace(/[／/\\|，、]+/g, " ").replace(/[\s\-_./]+/g, "");
@@ -1397,6 +1397,25 @@
     }
     return [...queries];
   }
+  function looksLikeModelCode(value) {
+    const text = normalizeLookupText(value);
+    const token = normalizeMeelsToken(text);
+    if (token.length < 3) return false;
+    const hasDigit = /\d/.test(token);
+    const canonicalBrands = new Set(Object.keys(MEELS_BRAND_ALIASES).map(normalizeMeelsToken));
+    const brandQueries = expandBrandQueries(text);
+    const matchesKnownBrand = canonicalBrands.has(token) || brandQueries.some((query) => canonicalBrands.has(query));
+    if (!hasDigit) {
+      return matchesKnownBrand ? false : token.length >= 8;
+    }
+    if (matchesKnownBrand && !/[/-]/.test(text)) return false;
+    const hasLetter = /[a-z]/i.test(text);
+    const hasSeparator = /[-/.]/.test(text);
+    if (hasDigit && (hasLetter || hasSeparator)) return true;
+    if (token.length >= 6 && hasDigit) return true;
+    if (token.length >= 8 && /^[a-z0-9]+$/i.test(token)) return true;
+    return hasDigit;
+  }
   function splitLookupQuery(brand, model) {
     let normalizedBrand = cleanTrailingPartialCjk(normalizeLookupText(brand));
     let normalizedModel = normalizeLookupText(model);
@@ -1406,20 +1425,26 @@
     const brandTokens = normalizedBrand.split(/\s+/).filter(Boolean);
     if (brandTokens.length >= 2) {
       const lastToken = brandTokens[brandTokens.length - 1];
-      if (/[A-Za-z0-9]/.test(lastToken) && lastToken.length >= 3) {
+      if (looksLikeModelCode(lastToken) || /[A-Za-z0-9]/.test(lastToken) && lastToken.length >= 3) {
         return {
           brand: brandTokens.slice(0, -1).join(" "),
           model: lastToken
         };
       }
     }
+    if (!normalizedModel && normalizedBrand && looksLikeModelCode(normalizedBrand)) {
+      return { brand: "", model: normalizedBrand };
+    }
     if (!normalizedBrand && normalizedModel.includes(" ")) {
       const modelTokens = normalizedModel.split(/\s+/).filter(Boolean);
       if (modelTokens.length >= 2) {
-        return {
-          brand: modelTokens.slice(0, -1).join(" "),
-          model: modelTokens[modelTokens.length - 1]
-        };
+        const lastToken = modelTokens[modelTokens.length - 1];
+        if (looksLikeModelCode(lastToken) || lastToken.length >= 3) {
+          return {
+            brand: modelTokens.slice(0, -1).join(" "),
+            model: lastToken
+          };
+        }
       }
     }
     return { brand: normalizedBrand, model: normalizedModel };
@@ -1471,11 +1496,14 @@
   }
   function scoreMeelsEntry(entry, brand, model) {
     const modelScore = scoreModelMatch(model, entry.model);
-    if (modelScore < 62) return 0;
+    if (modelScore < 55) return 0;
     const brandScore = scoreBrandMatch(brand, entry);
     const hasBrand = Boolean(normalizeLookupText(brand));
     if (!hasBrand) {
-      return modelScore >= 88 ? modelScore + 8 : modelScore >= 75 ? modelScore : 0;
+      if (modelScore >= 95) return modelScore + 12;
+      if (modelScore >= 82) return modelScore + 8;
+      if (modelScore >= 68) return modelScore + 4;
+      return 0;
     }
     if (brandScore < 18 && modelScore < 82) return 0;
     return modelScore + brandScore;
@@ -1487,8 +1515,8 @@
     if (normalizedModel.length < 2) {
       return { ok: false, message: "\u8ACB\u8F38\u5165\u578B\u865F\uFF08\u81F3\u5C11 2 \u500B\u5B57\uFF09\xB7 Enter model (min 2 chars)" };
     }
-    if (normalizedBrand.length < 2 && normalizedModel.length < 5) {
-      return { ok: false, message: "\u578B\u865F\u8F03\u77ED\u6642\u8ACB\u540C\u6642\u8F38\u5165\u54C1\u724C \xB7 Enter brand when model is short" };
+    if (!normalizedBrand && !looksLikeModelCode(normalizedModel) && normalizedModel.length < 4) {
+      return { ok: false, message: "\u578B\u865F\u8F03\u77ED\u6642\u8ACB\u8F38\u5165\u54C1\u724C\uFF0C\u6216\u8F38\u5165\u66F4\u5B8C\u6574\u578B\u865F \xB7 Add brand or a longer model code" };
     }
     if (`${normalizedBrand} ${normalizedModel}`.length > 120) {
       return { ok: false, message: "\u54C1\u724C\uFF0B\u578B\u865F\u904E\u9577 \xB7 Brand + model too long" };
@@ -1507,13 +1535,14 @@
   }
   function buildMeelsLookupResult(entry, { brand, model, confidence, catalogKeys, matchNote }) {
     const applianceCategory = catalogKeys.includes(entry.category) ? entry.category : inferApplianceType(entry.category, catalogKeys);
+    const estimateNote = entry.kwhEstimated ? "\uFF08\u6309\u6A19\u7A31\u529F\u7387\xD71000\u5C0F\u6642\u4F30\u7B97\uFF09\xB7 Estimated from rated power \xD7 1000 h/yr" : "";
     return parseLookupPayload({
       annualKwh: entry.annualKwh,
       applianceCategory,
       confidence,
       sourceUrl: MEELS_SOURCE_URL,
-      summary: `${matchNote} \xB7 MEELS \u80FD\u6548 ${entry.grade ?? "\u2014"} \u7D1A`,
-      summaryEn: `${matchNote} \xB7 MEELS grade ${entry.grade ?? "\u2014"}`,
+      summary: `${matchNote} \xB7 MEELS \u80FD\u6548 ${entry.grade ?? "\u2014"} \u7D1A${estimateNote}`,
+      summaryEn: `${matchNote} \xB7 MEELS grade ${entry.grade ?? "\u2014"}${estimateNote ? " \xB7 estimated kWh" : ""}`,
       brand: entry.brandEn || brand,
       model: entry.model
     }, catalogKeys);
@@ -1526,7 +1555,9 @@
     if (!Array.isArray(entries) || !entries.length) {
       return { ok: false, message: "MEELS \u8CC7\u6599\u672A\u8F09\u5165 \xB7 MEELS data not loaded" };
     }
-    const ranked = entries.map((entry) => ({ entry, score: scoreMeelsEntry(entry, validation.brand, validation.model) })).filter((item) => item.score >= 88).sort((a, b) => b.score - a.score);
+    const hasBrand = Boolean(validation.brand);
+    const minScore = hasBrand ? 88 : 72;
+    const ranked = entries.map((entry) => ({ entry, score: scoreMeelsEntry(entry, validation.brand, validation.model) })).filter((item) => item.score >= minScore).sort((a, b) => b.score - a.score);
     if (!ranked.length) {
       return {
         ok: false,
@@ -1534,9 +1565,10 @@
       };
     }
     const best = ranked[0];
-    const hasBrand = Boolean(validation.brand);
-    const confidence = best.score >= 145 ? "high" : best.score >= 115 ? "medium" : "low";
-    if (!hasBrand && ranked.filter((item) => item.score >= best.score - 8).length > 1) {
+    const closeCount = ranked.filter((item) => item.score >= best.score - 8).length;
+    const bestModelScore = scoreModelMatch(validation.model, best.entry.model);
+    const confidence = hasBrand ? best.score >= 145 ? "high" : best.score >= 115 ? "medium" : "low" : bestModelScore >= 95 && closeCount === 1 ? "high" : bestModelScore >= 82 && closeCount <= 2 ? "medium" : "low";
+    if (!hasBrand && closeCount > 1 && bestModelScore < 95) {
       return {
         ok: false,
         message: "\u6709\u591A\u500B\u76F8\u8FD1\u578B\u865F\uFF0C\u8ACB\u8F38\u5165\u54C1\u724C\u4EE5\u7E2E\u7A84\u7D50\u679C \xB7 Multiple close matches \u2014 add brand",
@@ -1578,6 +1610,7 @@
     globalThis.searchMeelsRegistry = searchMeelsRegistry;
     globalThis.validateMeelsLookupInput = validateMeelsLookupInput;
     globalThis.cleanTrailingPartialCjk = cleanTrailingPartialCjk;
+    globalThis.looksLikeModelCode = looksLikeModelCode;
     globalThis.splitLookupQuery = splitLookupQuery;
     globalThis.MEELS_SOURCE_URL = MEELS_SOURCE_URL;
   }
